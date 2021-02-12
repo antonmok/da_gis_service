@@ -125,7 +125,7 @@ public:
 
         // Echo the message
         ws_.async_write(
-            buffer_.data() + 1,
+            buffer_.data(),
             beast::bind_front_handler(
                 &CWSSession::on_write,
                 shared_from_this()));
