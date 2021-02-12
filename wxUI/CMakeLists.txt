@@ -12,8 +12,10 @@ INCLUDE("${wxWidgets_USE_FILE}" "/usr/local/lib/wx/include/gtk3-unicode-3.1")
 
 #set(H_CONFIG_FILES )
 
-set(CPP_FILES
-    wxMain.cpp)
+set(CPP_FILES 
+    wxMain.cpp
+    websocket_client.cpp
+)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 

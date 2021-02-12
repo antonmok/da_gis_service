@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <sstream>
 #include <memory>
-#include <string>
 #include <thread>
 
 #include "wxMain.h"
+#include "websocket_client.h"
 
 IMPLEMENT_APP(CWxMonitorApp)
 
 // This is executed upon startup, like 'main()' in non-wxWidgets programs.
 bool CWxMonitorApp::OnInit()
 {
-	MainFrame *frame = new MainFrame(_T("Oracle MP algo player"), wxPoint(790, 520), wxSize(850, 460));
+	MainFrame *frame = new MainFrame(_T("da_gis_service client"), wxPoint(790, 520), wxSize(850, 460));
 	
 	frame->Show(true);
 	SetTopWindow(frame);
@@ -39,12 +39,13 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	unsigned btnWidth = 95, btnHeight = 40, spacing = 10, row = 1;
 
 	SendBtn = new wxButton(this, BUTTON_SEND, _T("Send request"),
-		wxPoint(2 * btnWidth + spacing * 3, spacing),
+		wxPoint(spacing, spacing),
 		wxSize(btnWidth, btnHeight), 0);
 
 	statusLb = new wxStaticText(this, STATIC_STATUS, _T(""),
 		wxPoint(spacing, (btnHeight + spacing) * row +  spacing));
 
+	row = 4;
 	ExitBtn = new wxButton(this, BUTTON_EXIT, _T("Exit"), 
 		wxPoint(spacing, (btnHeight + spacing) * row +  spacing), 
 		wxSize(btnWidth, btnHeight), 0);
@@ -54,7 +55,7 @@ void MainFrame::OnSend(wxCommandEvent& event)
 {
 	(void)event;
 
-	// TODO: send request to server
+	spawn_client("127.0.0.1", "8082", "Hello world");
 }
 
 void MainFrame::OnExit(wxCommandEvent& event)

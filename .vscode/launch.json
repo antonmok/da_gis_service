@@ -45,11 +45,11 @@
         },
         
         {
-            "name": "webserver",
+            "name": "http_server",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/binaries/webserver",
-            "args": [],
+            "program": "${workspaceFolder}/binaries/http_server",
+            "args": ["127.0.0.1", "8082", "${workspaceFolder}/binaries", "2"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/binaries",
             "environment": [],

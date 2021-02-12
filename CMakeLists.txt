@@ -17,6 +17,7 @@ set(CPP_FILES
 
 add_subdirectory(wxUI)
 add_subdirectory(websocket_srv)
+add_subdirectory(http_server)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
@@ -24,3 +25,5 @@ target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${wxWidgets_LIBR
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run.sh ${CMAKE_INSTALL_PREFIX}/run.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stop.sh ${CMAKE_INSTALL_PREFIX}/stop.sh COPYONLY)
