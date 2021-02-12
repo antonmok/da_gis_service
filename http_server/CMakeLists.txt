@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(OpenSSL)
 
 set(CPP_FILES
-    httpserver.cpp)
+    httpserver.cpp
+    api_handler.cpp)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
