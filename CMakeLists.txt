@@ -21,7 +21,7 @@ add_subdirectory(http_server)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${wxWidgets_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
