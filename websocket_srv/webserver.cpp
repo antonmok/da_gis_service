@@ -241,15 +241,24 @@ private:
 
 int main(int argc, char* argv[])
 {
-    auto const address = net::ip::make_address("127.0.0.1");
-    auto const port = 8083;
-    auto const threads = 1;
+    // Check command line arguments.
+    if (argc != 3)
+    {
+        std::cerr <<
+            "Usage: websocket_srv <port> <threads>\n" <<
+            "Example:\n" <<
+            "    websocket_srv 8083 1\n";
+        return EXIT_FAILURE;
+    }
+
+    auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
+    auto const threads = std::max<int>(1, std::atoi(argv[2]));
 
     // The io_context is required for all I/O
     net::io_context ioc {threads};
 
     // Create and launch a listening port
-    std::make_shared<listener>(ioc, tcp::endpoint {address, port})->run();
+    std::make_shared<listener>(ioc, tcp::endpoint {tcp::v6(), port})->run();
 
     // Run the I/O service on the requested number of threads
     std::vector<std::thread> v;

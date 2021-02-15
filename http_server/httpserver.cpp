@@ -175,7 +175,7 @@ handle_request(
                 // Respond to API request
                 http::response<http::string_body> res {http::status::ok, req.version()};
                 res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-                res.set(http::field::access_control_allow_origin, "http://127.0.0.1");
+                res.set(http::field::access_control_allow_origin, "*");
                 res.set(http::field::content_type, "application/json");
                 res.body() = resp_str.c_str();
                 res.content_length(resp_str.size());
@@ -234,7 +234,7 @@ handle_request(
             // Respond to API request
             http::response<http::string_body> res {http::status::ok, req.version()};
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::access_control_allow_origin, "http://127.0.0.1");
+            res.set(http::field::access_control_allow_origin, "*");
             res.set(http::field::content_type, "application/json");
             res.body() = resp_str.c_str();
             res.content_length(resp_str.size());
@@ -251,7 +251,7 @@ handle_request(
 
         http::response<http::string_body> res {http::status::created, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(http::field::access_control_allow_origin, "http://127.0.0.1");
+        res.set(http::field::access_control_allow_origin, "*");
         res.set(http::field::access_control_allow_headers, "content-type");
         res.set(http::field::access_control_allow_methods, "GET,HEAD,PUT,PATCH,POST,DELETE");
         res.set(http::field::content_type, "text/plain");
@@ -515,18 +515,18 @@ private:
 int main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 5)
+    if (argc != 4)
     {
         std::cerr <<
-            "Usage: http-server-async <address> <port> <doc_root> <threads>\n" <<
+            "Usage: http_server <port> <doc_root> <threads>\n" <<
             "Example:\n" <<
-            "    http-server-async 0.0.0.0 8080 . 1\n";
+            "    http_server 8080 . 1\n";
         return EXIT_FAILURE;
     }
-    auto const address = net::ip::make_address(argv[1]);
-    auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
-    auto const doc_root = std::make_shared<std::string>(argv[3]);
-    auto const threads = std::max<int>(1, std::atoi(argv[4]));
+
+    auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
+    auto const doc_root = std::make_shared<std::string>(argv[2]);
+    auto const threads = std::max<int>(1, std::atoi(argv[3]));
 
     // The io_context is required for all I/O
     net::io_context ioc{threads};
@@ -534,7 +534,7 @@ int main(int argc, char* argv[])
     // Create and launch a listening port
     std::make_shared<listener>(
         ioc,
-        tcp::endpoint{address, port},
+        tcp::endpoint{tcp::v6(), port},
         doc_root)->run();
 
     // Run the I/O service on the requested number of threads
