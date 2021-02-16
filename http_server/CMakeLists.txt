@@ -14,7 +14,8 @@ find_package(OpenSSL)
 
 set(CPP_FILES
     httpserver.cpp
-    api_handler.cpp)
+    api_handler.cpp
+    users_storage.cpp)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
