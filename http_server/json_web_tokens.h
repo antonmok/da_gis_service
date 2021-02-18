@@ -1,2 +1,0 @@
-#prama once
-

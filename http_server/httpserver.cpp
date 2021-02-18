@@ -169,7 +169,7 @@ handle_request(
         if (rel_path.substr(0, 4) == "/api") {
 
             std::string resp_str;
-            http_status = handle_api_request(rel_path, resp_str);
+            http_status = handle_api_request({ rel_path.data(), rel_path.length() }, resp_str);
 
             // Respond to API request
             http::response<http::string_body> res { http_status, req.version() };
@@ -229,7 +229,7 @@ handle_request(
     } else if (req.method() == http::verb::post) {
 
         std::string resp_str;
-        http_status = handle_api_post_request(rel_path, resp_str);
+        http_status = handle_api_post_request({ rel_path.data(), rel_path.length() }, req.body(), resp_str);
 
         if (http_status != http::status::not_found) {
             // Respond to API request

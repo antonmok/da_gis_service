@@ -10,10 +10,10 @@ class CUsersData
 public:
 
     struct UserData {
-        bool isAdmin;
-        bool isUser;
-        bool firstLogin;
-        unsigned id;
+        bool isAdmin = false;
+        bool isUser = true;
+        bool firstLogin = true;
+        unsigned id = 0;
         std::string name;
         std::string position;
         std::string login;
@@ -34,7 +34,7 @@ public:
     void GetUserData(const std::string& token) const;
     void GetUserData(unsigned id) const;
 
-    // TODO: store users in bd
+    // TODO: store users in bd (sqlite?)
     void AddUser(const UserData&);
     void DeleteUser();
 
