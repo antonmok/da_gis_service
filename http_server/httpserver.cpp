@@ -4,7 +4,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <boost/beast/version.hpp>
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/config.hpp>
@@ -20,6 +19,7 @@
 
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+using request_body_t = boost::beast::http::string_body;
 
 // Return a reasonable mime type based on the extension of a file.
 beast::string_view
@@ -84,6 +84,76 @@ path_cat(
     return result;
 }
 
+// Returns a bad request response
+template<class Body, class Allocator>
+auto bad_request(http::request<Body, http::basic_fields<Allocator>>&& req, beast::string_view why)
+{
+    http::response<http::string_body> res{ http::status::bad_request, req.version() };
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = std::string(why);
+    res.prepare_payload();
+
+    return res;
+};
+
+// Returns a not found response
+template<class Body, class Allocator>
+auto not_found(http::request<Body, http::basic_fields<Allocator>>&& req)
+{
+    http::response<http::string_body> res{ http::status::not_found, req.version() };
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "The resource '" + std::string(req.target().data(), req.target().length()) + "' was not found.";
+    res.prepare_payload();
+
+    return res;
+};
+
+// Returns a server error response
+template<class Body, class Allocator>
+auto server_error(http::request<Body, http::basic_fields<Allocator>>&& req, beast::string_view what)
+{
+    http::response<http::string_body> res{http::status::internal_server_error, req.version()};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "An error occurred: '" + std::string(what) + "'";
+    res.prepare_payload();
+
+    return res;
+};
+
+// Returns a unauthorized response
+template<class Body, class Allocator>
+auto unauthorized(http::request<Body, http::basic_fields<Allocator>>&& req)
+{
+    http::response<http::string_body> res{http::status::unauthorized, req.version()};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "You are not logged in";
+    res.prepare_payload();
+
+    return res;
+};
+
+// Returns a forbidden response
+template<class Body, class Allocator>
+auto forbidden(http::request<Body, http::basic_fields<Allocator>>&& req)
+{
+    http::response<http::string_body> res{http::status::forbidden, req.version()};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "You are not allowed to access" + std::string(req.target().data(), req.target().length());
+    res.prepare_payload();
+
+    return res;
+};
+
 // This function produces an HTTP response for the given
 // request. The type of the response object depends on the
 // contents of the request, so the interface requires the
@@ -97,44 +167,7 @@ handle_request(
     http::request<Body, http::basic_fields<Allocator>>&& req,
     Send&& send)
 {
-    // Returns a bad request response
-    auto const bad_request =
-    [&req](beast::string_view why)
-    {
-        http::response<http::string_body> res{http::status::bad_request, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(http::field::content_type, "text/html");
-        res.keep_alive(req.keep_alive());
-        res.body() = std::string(why);
-        res.prepare_payload();
-        return res;
-    };
-
-    // Returns a not found response
-    auto const not_found =
-    [&req](beast::string_view target)
-    {
-        http::response<http::string_body> res{http::status::not_found, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(http::field::content_type, "text/html");
-        res.keep_alive(req.keep_alive());
-        res.body() = "The resource '" + std::string(target) + "' was not found.";
-        res.prepare_payload();
-        return res;
-    };
-
-    // Returns a server error response
-    auto const server_error =
-    [&req](beast::string_view what)
-    {
-        http::response<http::string_body> res{http::status::internal_server_error, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(http::field::content_type, "text/html");
-        res.keep_alive(req.keep_alive());
-        res.body() = "An error occurred: '" + std::string(what) + "'";
-        res.prepare_payload();
-        return res;
-    };
+    std::cout << "--- Request headers" << std::endl << req.base() << std::endl;
 
     // Make sure we can handle the method
     if (req.method() != http::verb::get &&
@@ -142,7 +175,7 @@ handle_request(
         req.method() != http::verb::post &&
         req.method() != http::verb::options) {
             std::cout << "BAD: Unknown HTTP-method" << std::endl;
-            return send(bad_request("Unknown HTTP-method"));
+            return send(bad_request(std::move(req), "Unknown HTTP-method"));
         }
 
     // Request path must be absolute and not contain "..".
@@ -150,7 +183,7 @@ handle_request(
         req.target()[0] != '/' ||
         req.target().find("..") != beast::string_view::npos) {
             std::cout << "BAD: Illegal request-target" << std::endl;
-            return send(bad_request("Illegal request-target"));
+            return send(bad_request(std::move(req), "Illegal request-target"));
         }
 
     // Build the path to the requested file
@@ -192,10 +225,10 @@ handle_request(
 
         // Handle the case where the file doesn't exist
         if (ec == beast::errc::no_such_file_or_directory)
-            return send(not_found(req.target()));
+            return send(not_found(std::move(req)));
 
         // Handle an unknown error
-        if (ec) return send(server_error(ec.message()));
+        if (ec) return send(server_error(std::move(req), ec.message()));
 
         // Cache the size since we need it after the move
         auto const size = body.size();
@@ -231,7 +264,7 @@ handle_request(
         std::string resp_str;
         http_status = handle_api_post_request({ rel_path.data(), rel_path.length() }, req.body(), resp_str);
 
-        if (http_status != http::status::not_found) {
+        if (http_status == http::status::ok) {
             // Respond to API request
             http::response<http::string_body> res{ http_status, req.version() };
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
@@ -241,11 +274,11 @@ handle_request(
             res.content_length(resp_str.size());
             res.keep_alive(req.keep_alive());
 
-            std::cout << "POST " << rel_path << std::endl;
+            std::cout << "POST body:" << rel_path << std::endl << req.body() << std::endl;
 
             return send(std::move(res));
         } else {
-            return send(not_found(req.target()));
+            return send(not_found(std::move(req)));
         }
 
     } else if (req.method() == http::verb::options) {
@@ -253,14 +286,14 @@ handle_request(
         http::response<http::string_body> res {http::status::created, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(http::field::access_control_allow_origin, "*");
-        res.set(http::field::access_control_allow_headers, "content-type");
-        res.set(http::field::access_control_allow_methods, "GET,HEAD,PUT,PATCH,POST,DELETE");
+        res.set(http::field::access_control_allow_headers, req["Access-Control-Request-Headers"]);
+        res.set(http::field::access_control_allow_methods, req["Access-Control-Request-Method"]);
         res.set(http::field::content_type, "text/plain");
         res.body() = "\r\n";
         res.content_length(0);
         res.keep_alive(req.keep_alive());
 
-        std::cout << "OPTIONS request" << std::endl;
+        std::cout << "OPTIONS" << std::endl;
 
         return send(std::move(res));
     }

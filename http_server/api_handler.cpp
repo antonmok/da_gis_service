@@ -40,11 +40,23 @@ void FillRouteMethods()
     route_methods_["api/info"] = InfoUser;
 }
 
-http::status handle_api_request(const std::string& path, std::string& resp_str)
+bool GetParamKey(const std::string& path, unsigned idx, std::string& key_val)
 {
     // parse url, get parameters
     Url url(path);
-    auto sz = url.query().size();
+    //auto sz = url.query().size();
+    key_val.assign(url.query(idx).key());
+
+    return true;
+}
+
+void IsAuthorized()
+{
+    //auto token_boost_str = req["Authorization"];
+}
+
+http::status handle_api_request(const std::string& path, std::string& resp_str)
+{
     // is user loged
 
     // is user autorithed to call method
