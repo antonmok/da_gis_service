@@ -17,6 +17,8 @@
 
 #include "api_handler.h"
 
+#define SERVER_VERSION_STRING "blabber/1.0 (Linux)"
+
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 using request_body_t = boost::beast::http::string_body;
@@ -194,92 +196,26 @@ handle_request(
         path.append("index.html");
     }
 
-    // status for any response
-    http::status http_status = http::status::ok;
+    beast::error_code ec;
+    http::file_body::value_type body;
 
-    if (req.method() == http::verb::get || req.method() == http::verb::head) {
-
-        if (rel_path.substr(0, 4) == "/api") {
-
-            std::string resp_str;
-            http_status = handle_api_request({ rel_path.data(), rel_path.length() }, resp_str);
-
-            // Respond to API request
-            http::response<http::string_body> res { http_status, req.version() };
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::access_control_allow_origin, "*");
-            res.set(http::field::content_type, "application/json");
-            res.body() = resp_str.c_str();
-            res.content_length(resp_str.size());
-            res.keep_alive(req.keep_alive());
-
-            std::cout << "GET (API) " << rel_path << std::endl;
-
-            return send(std::move(res));
-        }
+    // Respond to HEAD request
+    if (req.method() == http::verb::head) {
 
         // Attempt to open the file
-        beast::error_code ec;
-        http::file_body::value_type body;
         body.open(path.c_str(), beast::file_mode::scan, ec);
-
         // Handle the case where the file doesn't exist
-        if (ec == beast::errc::no_such_file_or_directory)
-            return send(not_found(std::move(req)));
-
+        if (ec == beast::errc::no_such_file_or_directory) return send(not_found(std::move(req)));
         // Handle an unknown error
         if (ec) return send(server_error(std::move(req), ec.message()));
 
-        // Cache the size since we need it after the move
-        auto const size = body.size();
-
-        // Respond to HEAD request
-        if (req.method() == http::verb::head) {
-
-            http::response<http::empty_body> res{http::status::ok, req.version()};
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, mime_type(path));
-            res.content_length(size);
-            res.keep_alive(req.keep_alive());
-
-            return send(std::move(res));
-        }
-
-        // Respond to GET request
-        http::response<http::file_body> res{
-            std::piecewise_construct,
-            std::make_tuple(std::move(body)),
-            std::make_tuple(http::status::ok, req.version())};
-
+        http::response<http::empty_body> res{http::status::ok, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(http::field::content_type, mime_type(path));
-        res.content_length(size);
+        res.content_length(body.size());
         res.keep_alive(req.keep_alive());
 
-        std::cout << "GET " << rel_path << std::endl;
         return send(std::move(res));
-
-    } else if (req.method() == http::verb::post) {
-
-        std::string resp_str;
-        http_status = handle_api_post_request({ rel_path.data(), rel_path.length() }, req.body(), resp_str);
-
-        if (http_status == http::status::ok) {
-            // Respond to API request
-            http::response<http::string_body> res{ http_status, req.version() };
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::access_control_allow_origin, "*");
-            res.set(http::field::content_type, "application/json");
-            res.body() = resp_str.c_str();
-            res.content_length(resp_str.size());
-            res.keep_alive(req.keep_alive());
-
-            std::cout << "POST body:" << rel_path << std::endl << req.body() << std::endl;
-
-            return send(std::move(res));
-        } else {
-            return send(not_found(std::move(req)));
-        }
 
     } else if (req.method() == http::verb::options) {
 
@@ -296,6 +232,53 @@ handle_request(
         std::cout << "OPTIONS" << std::endl;
 
         return send(std::move(res));
+
+    } else if (req.method() == http::verb::get &&   // Respond to GET file request
+               rel_path.substr(0, 4) != "/api") {
+        
+        // Attempt to open the file
+        body.open(path.c_str(), beast::file_mode::scan, ec);
+        // Handle the case where the file doesn't exist
+        if (ec == beast::errc::no_such_file_or_directory) return send(not_found(std::move(req)));
+        // Handle an unknown error
+        if (ec) return send(server_error(std::move(req), ec.message()));
+
+        http::response<http::file_body> res{
+            std::piecewise_construct,
+            std::make_tuple(std::move(body)),
+            std::make_tuple(http::status::ok, req.version())};
+
+        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(http::field::content_type, mime_type(path));
+        res.content_length(body.size());
+        res.keep_alive(req.keep_alive());
+
+        return send(std::move(res));
+
+    } else { // POST and GET api requests
+
+        // response body
+        std::string resp_body;
+        // http response status
+        http::status resp_status = handle_api_request(std::move(req), resp_body);
+
+        if (resp_status == http::status::ok) {
+            // Respond to API request
+            http::response<http::string_body> res{ resp_status, req.version() };
+            res.set(http::field::server, SERVER_VERSION_STRING);
+            res.set(http::field::access_control_allow_origin, "*");
+            res.set(http::field::content_type, "application/json");
+            res.body() = resp_body.c_str();
+            res.content_length(resp_body.size());
+            res.keep_alive(req.keep_alive());
+
+            std::cout << "POST body:" << rel_path << std::endl << req.body() << std::endl;
+
+            return send(std::move(res));
+
+        } else {
+            return send(not_found(std::move(req)));
+        }
     }
 }
 
