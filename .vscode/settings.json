@@ -92,6 +92,7 @@
         "__split_buffer": "cpp",
         "__string": "cpp",
         "__tuple": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "__functional_03": "cpp"
     }
 }

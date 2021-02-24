@@ -4,9 +4,10 @@
 #include <vector>
 #include <string>
 
+#include "credentials.hpp" // +boost/json.hpp
+
 class CUsersData
 {
-
 public:
 
     struct UserData {
@@ -16,8 +17,7 @@ public:
         unsigned id = 0;
         std::string name;
         std::string position;
-        std::string login;
-        std::string pass;
+        Credentials credentials;
         std::vector<std::string> routes;
         std::vector<std::string> tokens;
     };
@@ -25,8 +25,9 @@ public:
     static CUsersData& Instance();
 
     // On success returns true and fills token 
-    bool AuthenticateUser(const std::string& name, const std::string& pass, std::string& token);
-    void DisproveUser(const std::string& name, const std::string& pass);
+    bool AuthenticateUser(const std::string& username, const std::string& pass, std::string& token);
+    bool AuthenticateUser(const Credentials& credentials, std::string& token);
+    void DisproveUser(const std::string& name);
 
     bool CheckAccess(const std::string& token) const;
     bool CheckToken(const std::string& token) const;

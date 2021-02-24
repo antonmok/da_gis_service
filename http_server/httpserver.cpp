@@ -260,7 +260,7 @@ handle_request(
         // response body
         std::string resp_body;
         // http response status
-        http::status resp_status = handle_api_request(std::move(req), resp_body);
+        http::status resp_status = CAPIHandler::Instance().HandleApiRequest(std::move(req), resp_body);
 
         if (resp_status == http::status::ok) {
             // Respond to API request

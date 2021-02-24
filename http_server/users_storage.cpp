@@ -1,5 +1,7 @@
 #include <regex>
 
+#include <boost/json/src.hpp> // for header only version
+
 #include "users_storage.h"
 #include "jwt/json_web_tokens.h"
 
@@ -15,16 +17,16 @@ CUsersData::CUsersData()
 
     usr.name = "Ivan Ivanovich";
     usr.position = "Developer";
-    usr.login = "admin";
-    usr.pass = "pass";
+    usr.credentials.username = "admin";
+    usr.credentials.password = "123";
     usr.isAdmin = true;
     usr.routes.push_back({ "/api/*" });
 
     users_.push_back(usr);
 
     usr.name = "Gosha";
-    usr.login = "user";
-    usr.pass = "user";
+    usr.credentials.username = "user";
+    usr.credentials.password = "ololo";
     usr.isAdmin = false;
 
     usr.routes.clear();
@@ -36,14 +38,32 @@ CUsersData::CUsersData()
     users_.push_back(usr);
 }
 
-bool CUsersData::AuthenticateUser(const std::string& name, const std::string& pass, std::string& token)
+bool CUsersData::AuthenticateUser(const std::string& username, const std::string& password, std::string& token)
 {
     std::lock_guard<std::mutex> guard(mutex_);
 
-    return true;
+    for (auto& user : users_) {
+
+        if (user.credentials.username == username) {
+            if (user.credentials.password == password) {
+                // create token
+                jwtoken::CreateToken(username, token);
+                // assign token to user
+                user.tokens.push_back(token);
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
-void CUsersData::DisproveUser(const std::string& name, const std::string& pass)
+bool CUsersData::AuthenticateUser(const Credentials& creds, std::string& token)
+{
+    return AuthenticateUser(creds.username, creds.password, token);
+}
+
+void CUsersData::DisproveUser(const std::string& username)
 {
     std::lock_guard<std::mutex> guard(mutex_);
 
