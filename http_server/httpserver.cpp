@@ -15,7 +15,7 @@
 #include <thread>
 #include <vector>
 
-#include "api_handler.h"
+#include "api/api_handler.h"
 
 #define SERVER_VERSION_STRING "blabber/1.0 (Linux)"
 
@@ -92,6 +92,7 @@ auto bad_request(http::request<Body, http::basic_fields<Allocator>>&& req, beast
 {
     http::response<http::string_body> res{ http::status::bad_request, req.version() };
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
     res.body() = std::string(why);
@@ -106,6 +107,7 @@ auto not_found(http::request<Body, http::basic_fields<Allocator>>&& req)
 {
     http::response<http::string_body> res{ http::status::not_found, req.version() };
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
     res.body() = "The resource '" + std::string(req.target().data(), req.target().length()) + "' was not found.";
@@ -120,6 +122,7 @@ auto server_error(http::request<Body, http::basic_fields<Allocator>>&& req, beas
 {
     http::response<http::string_body> res{http::status::internal_server_error, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
     res.body() = "An error occurred: '" + std::string(what) + "'";
@@ -134,6 +137,7 @@ auto unauthorized(http::request<Body, http::basic_fields<Allocator>>&& req)
 {
     http::response<http::string_body> res{http::status::unauthorized, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
     res.body() = "You are not logged in";
@@ -148,6 +152,7 @@ auto forbidden(http::request<Body, http::basic_fields<Allocator>>&& req)
 {
     http::response<http::string_body> res{http::status::forbidden, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
     res.body() = "You are not allowed to access" + std::string(req.target().data(), req.target().length());
@@ -229,8 +234,6 @@ handle_request(
         res.content_length(0);
         res.keep_alive(req.keep_alive());
 
-        std::cout << "OPTIONS" << std::endl;
-
         return send(std::move(res));
 
     } else if (req.method() == http::verb::get &&   // Respond to GET file request
@@ -272,12 +275,31 @@ handle_request(
             res.content_length(resp_body.size());
             res.keep_alive(req.keep_alive());
 
-            std::cout << "POST body:" << rel_path << std::endl << req.body() << std::endl;
+            std::cout << ">>POST body:" << rel_path << std::endl << req.body() << std::endl;
+            std::cout << "<<" << std::endl;
 
             return send(std::move(res));
 
         } else {
-            return send(not_found(std::move(req)));
+            switch (resp_status)
+            {
+            case http::status::unauthorized:
+                return send(unauthorized(std::move(req)));
+                break;
+            case http::status::forbidden:
+                return send(forbidden(std::move(req)));
+                break;
+            case http::status::not_found:
+                return send(not_found(std::move(req)));
+                break;
+            case http::status::bad_request:
+                return send(bad_request(std::move(req), resp_body));
+                break;
+
+            default:
+                return send(server_error(std::move(req), resp_body));
+                break;
+            }
         }
     }
 }
@@ -528,7 +550,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-
+// TODO: add logger
 int main(int argc, char* argv[])
 {
     // Check command line arguments.

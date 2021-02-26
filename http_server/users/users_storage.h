@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "credentials.hpp" // +boost/json.hpp
+#include "api/json_structs.hpp" // +boost/json.hpp
 
 class CUsersData
 {
@@ -13,7 +13,7 @@ public:
     struct UserData {
         bool isAdmin = false;
         bool isUser = true;
-        bool firstLogin = true;
+        bool firstLogin = false;
         unsigned id = 0;
         std::string name;
         std::string position;
@@ -27,15 +27,15 @@ public:
     // On success returns true and fills token 
     bool AuthenticateUser(const std::string& username, const std::string& pass, std::string& token);
     bool AuthenticateUser(const Credentials& credentials, std::string& token);
-    void DisproveUser(const std::string& name);
+    void DisproveUser(const std::string& token);
 
-    bool CheckAccess(const std::string& token) const;
-    bool CheckToken(const std::string& token) const;
+    bool CheckAccess(const std::string& token, const std::string& route) const;
+    bool VerifyToken(const std::string& token);
 
-    void GetUserData(const std::string& token) const;
+    UserData GetUserData(const std::string& token) const;
     void GetUserData(unsigned id) const;
 
-    // TODO: store users in bd (sqlite?)
+    // TODO: store users in bd (sqlite)
     void AddUser(const UserData&);
     void DeleteUser();
 
@@ -46,6 +46,8 @@ private:
 
 	CUsersData(CUsersData const&) = delete;
 	CUsersData& operator= (CUsersData const&) = delete;
+
+    bool TokenExist(const std::string& token) const;
 
     mutable std::mutex mutex_;
     std::vector<UserData> users_;

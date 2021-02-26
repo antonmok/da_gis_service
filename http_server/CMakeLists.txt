@@ -12,10 +12,12 @@ find_package(Threads REQUIRED)
 #set(H_CONFIG_FILES )
 find_package(OpenSSL)
 
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+
 set(CPP_FILES
     httpserver.cpp
-    api_handler.cpp
-    users_storage.cpp
+    api/api_handler.cpp
+    users/users_storage.cpp
     jwt/json_web_tokens.cpp
     url/url.cpp)
 

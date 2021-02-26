@@ -62,6 +62,26 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+
+        {
+            "name": "test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/binaries/niokr_test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/binaries",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

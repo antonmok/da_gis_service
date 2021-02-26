@@ -18,6 +18,7 @@ set(CPP_FILES
 add_subdirectory(wxUI)
 add_subdirectory(websocket_srv)
 add_subdirectory(http_server)
+add_subdirectory(test)
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 

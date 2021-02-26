@@ -17,7 +17,7 @@ bool Verify(const std::string& token) {
 	auto decoded = jwt::decode(token);
 
 	std::error_code ec;
-	verify.verify(decoded);
+	verify.verify(decoded, ec);
 
 	if (ec) {
 		std::cout << "token verification error: " << ec.message() << std::endl;
