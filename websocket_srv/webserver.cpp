@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <glog/logging.h>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -29,7 +30,7 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 void
 fail(beast::error_code ec, char const* what)
 {
-    std::cerr << what << ": " << ec.message() << "\n";
+    LOG(ERROR) << what << ": " << ec.message() << "\n";
 }
 
 class CWSSession : public std::enable_shared_from_this<CWSSession>
@@ -121,7 +122,7 @@ public:
         // Set data type (text/binary)
         ws_.text(ws_.got_text());
 
-        std::cout << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
+        DLOG(INFO) << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
 
         // Echo the message
         ws_.async_write(

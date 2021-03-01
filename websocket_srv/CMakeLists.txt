@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+find_package (glog 0.5.0 REQUIRED)
 
 #set(H_CONFIG_FILES )
 
@@ -16,7 +17,7 @@ set(CPP_FILES
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads glog::glog)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 

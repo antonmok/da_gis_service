@@ -3,6 +3,7 @@
 #include <chrono>
 #include "jwt-cpp/jwt.h"
 #include "json_web_tokens.h"
+#include <glog/logging.h>
 
 #define SECRET_STRING "secret_string"
 #define ISSUER	"BLABBER"
@@ -20,7 +21,7 @@ bool Verify(const std::string& token) {
 	verify.verify(decoded, ec);
 
 	if (ec) {
-		std::cout << "token verification error: " << ec.message() << std::endl;
+		LOG(INFO) << "token verification error: " << ec.message() << std::endl;
 		return false;
 	} else {
 		return true;

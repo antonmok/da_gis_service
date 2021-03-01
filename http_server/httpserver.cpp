@@ -14,10 +14,12 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <glog/logging.h>
 
 #include "api/api_handler.h"
 
-#define SERVER_VERSION_STRING "blabber/1.0 (Linux)"
+#define SERVER_VERSION_STRING       "blabber/1.0 (Linux)"
+#define GLOG_AUTO_CLEAN_AFTER_DAYS  30  // keep your logs for 30 days
 
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
@@ -174,14 +176,14 @@ handle_request(
     http::request<Body, http::basic_fields<Allocator>>&& req,
     Send&& send)
 {
-    std::cout << "--- Request headers" << std::endl << req.base() << std::endl;
+    DLOG(INFO) << "--- Request headers" << std::endl << req.base() << std::endl;
 
     // Make sure we can handle the method
     if (req.method() != http::verb::get &&
         req.method() != http::verb::head &&
         req.method() != http::verb::post &&
         req.method() != http::verb::options) {
-            std::cout << "BAD: Unknown HTTP-method" << std::endl;
+            DLOG(INFO) << "BAD: Unknown HTTP-method" << std::endl;
             return send(bad_request(std::move(req), "Unknown HTTP-method"));
         }
 
@@ -189,7 +191,7 @@ handle_request(
     if (req.target().empty() ||
         req.target()[0] != '/' ||
         req.target().find("..") != beast::string_view::npos) {
-            std::cout << "BAD: Illegal request-target" << std::endl;
+            DLOG(INFO) << "BAD: Illegal request-target" << std::endl;
             return send(bad_request(std::move(req), "Illegal request-target"));
         }
 
@@ -275,8 +277,8 @@ handle_request(
             res.content_length(resp_body.size());
             res.keep_alive(req.keep_alive());
 
-            std::cout << ">>POST body:" << rel_path << std::endl << req.body() << std::endl;
-            std::cout << "<<" << std::endl;
+            DLOG(INFO) << ">>POST body:" << rel_path << std::endl << req.body() << std::endl;
+            DLOG(INFO) << "<<" << std::endl;
 
             return send(std::move(res));
 
@@ -550,7 +552,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-// TODO: add logger
 int main(int argc, char* argv[])
 {
     // Check command line arguments.
@@ -562,6 +563,15 @@ int main(int argc, char* argv[])
             "    http_server 8080 . 1\n";
         return EXIT_FAILURE;
     }
+
+    // Initialize Google’s logging library.
+#ifdef NDEBUG
+    FLAGS_logtostderr = 0;
+#else
+    FLAGS_logtostderr = 1;
+#endif
+    google::InitGoogleLogging(argv[0]);
+    google::EnableLogCleaner(GLOG_AUTO_CLEAN_AFTER_DAYS);
 
     auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
     auto const doc_root = std::make_shared<std::string>(argv[2]);

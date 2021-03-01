@@ -11,6 +11,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <glog/logging.h>
 
 #include "websocket_client.h"
 
@@ -128,7 +129,7 @@ public:
         if(ec)
             return fail(ec, "handshake");
         
-        std::cout << "send: " << text_ << std::endl;
+        DLOG(INFO) << "send: " << text_ << std::endl;
 
         // Send the message
         ws_.async_write(
@@ -182,7 +183,7 @@ public:
         // If we get here then the connection is closed gracefully
 
         // The make_printable() function helps print a ConstBufferSequence
-        std::cout << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
+        DLOG(INFO) << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
     }
 };
 

@@ -11,6 +11,7 @@ find_package(Threads REQUIRED)
 
 #set(H_CONFIG_FILES )
 find_package(OpenSSL)
+find_package (glog 0.5.0 REQUIRED)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
@@ -23,7 +24,7 @@ set(CPP_FILES
 
 add_executable(${PROJECT_NAME} ${CPP_FILES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads glog::glog ${OPENSSL_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
