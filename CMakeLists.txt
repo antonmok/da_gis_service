@@ -19,7 +19,8 @@ endif()
 
 add_subdirectory(websocket_srv)
 add_subdirectory(http_server)
-add_subdirectory(test)
+enable_testing()
+add_subdirectory(tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run.sh ${CMAKE_INSTALL_PREFIX}/run.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stop.sh ${CMAKE_INSTALL_PREFIX}/stop.sh COPYONLY)
