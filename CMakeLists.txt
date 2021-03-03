@@ -10,17 +10,15 @@ message(STATUS "${CMAKE_SYSTEM_PROCESSOR}")
 
 #set(H_CONFIG_FILES )
 
-set(CPP_FILES
-    main.cpp)
+set(CPP_FILES main.cpp)
 
+enable_testing()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86_64")
     add_subdirectory(wxUI)
 endif()
 
 add_subdirectory(websocket_srv)
 add_subdirectory(http_server)
-enable_testing()
-add_subdirectory(tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run.sh ${CMAKE_INSTALL_PREFIX}/run.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stop.sh ${CMAKE_INSTALL_PREFIX}/stop.sh COPYONLY)

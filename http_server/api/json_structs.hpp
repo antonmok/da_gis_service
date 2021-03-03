@@ -18,6 +18,17 @@ inline void tag_invoke(json::value_from_tag, json::value& jv, const JSToken& t)
     };
 }
 
+inline JSToken tag_invoke( json::value_to_tag<JSToken>, json::value const& jv )
+{
+    json::object const& obj = jv.as_object();
+
+    if (obj.find("token")) {
+        return JSToken{
+            json::value_to<std::string>(obj.at("token")),
+        };
+    } else return JSToken{ "" };
+}
+
 /*******************************/
 struct Credentials
 {
@@ -38,14 +49,14 @@ inline Credentials tag_invoke( json::value_to_tag<Credentials>, json::value cons
 }
 
 template<typename T>
-inline bool JsonToStruct(const std::string& bodyStr, T& creds)
+inline bool JsonToStruct(const std::string& bodyStr, T& st)
 {
     json::error_code ec;
     json::value bodyJson = json::parse(bodyStr.c_str(), ec);
 
     if (ec) return false;
 
-    creds = json::value_to<T>(bodyJson);
+    st = json::value_to<T>(bodyJson);
 
     return true;
 }

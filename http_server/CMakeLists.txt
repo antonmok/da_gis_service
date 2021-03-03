@@ -13,18 +13,24 @@ find_package(Threads REQUIRED)
 find_package(OpenSSL)
 find_package (glog 0.5.0 REQUIRED)
 
-include_directories(${CMAKE_CURRENT_LIST_DIR})
+include_directories(${PROJECT_SOURCE_DIR})
 
 set(CPP_FILES
-    httpserver.cpp
     api/api_handler.cpp
     users/users_storage.cpp
     jwt/json_web_tokens.cpp
     url/url.cpp)
 
-add_executable(${PROJECT_NAME} ${CPP_FILES})
+set(CPP_TEST_FILES
+    api/test_api.cpp
+    users/test_users.cpp
+    jwt/test_jwt.cpp)
+
+add_executable(${PROJECT_NAME} httpserver.cpp ${CPP_FILES})
+add_executable(${PROJECT_NAME}_test ${CPP_FILES} ${CPP_TEST_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads glog::glog ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_test PRIVATE Threads::Threads glog::glog ${OPENSSL_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
-
+add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
