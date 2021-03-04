@@ -33,7 +33,6 @@
 
 #include <experimental/filesystem>
 
-//#include <curl/curl.h>
 #include <libwebsockets.h>
 
 #include <stdio.h>
@@ -57,7 +56,7 @@
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 
-#include "base64.c"
+#include "base64.h"
 
 #include "sys/stat.h"
 
@@ -96,6 +95,13 @@ uint64_t _lastImage = 0;
 int fps_cap_cnt = 0;
 int fps_cnt = 0;
 
+enum MODE_VERIFY {
+    VERIFY_TIME,
+    VERIFY_COORD,
+    VERIFY_DIST,
+    MODE_TIME
+};
+
 struct nmea
 {
     time_t xtime;
@@ -116,42 +122,14 @@ double getCalcTime(char* time_date);
 double getCalcTimeNs(char* time_date);
 uint64_t getTimeMcsFromArray(int file_id);
 
-enum class WEB_CMD{
-    web_null,
-    web_setBrightness,
-    web_setMode,
-    web_setSettings
-    };
-
 enum class VRF_CMD{
     vrf_null,
     vrf_setBrightness,
     vrf_setMode,
     vrf_setSettings
-    };
+};
 
-enum class WEB2_CMD{
-    web2_null,
-    web2_setBrightness,
-    web2_setMode,
-    web2_setSettings
-    };
-
-//int sendPost();
-
-void thrWebServer();
 void thrVerifyServer();
-void thrWeb2Server();
-
-int sct_web, sct_web_new;
-void reacceptWeb();
-int accept_connectionWeb();
-
-int recvWebMessage(WEB_CMD *cmd,std::string *params);
-WEB_CMD recvWebParsing(int size,std::string *params);
-
-int sendWebAnswer(WEB_CMD cmd,std::string params);
-std::string prepareWebAnswer(WEB_CMD cmd,std::string params);
 
 int sct_vrf, sct_vrf_new;
 void reacceptVerify();
@@ -163,19 +141,7 @@ VRF_CMD recvVerifyParsing(int size,std::string *params);
 int sendVerifyAnswer(VRF_CMD cmd,std::string params);
 int prepareVerifyAnswer(VRF_CMD cmd,std::string params);
 
-int sct_web2, sct_web2_new;
-void reacceptWeb2();
-int accept_connectionWeb2();
-
-int recvWeb2Message(WEB2_CMD *cmd,std::string *params);
-WEB2_CMD recvWeb2Parsing(int size,std::string *params);
-
-int sendWeb2Answer(WEB2_CMD cmd,std::string params);
-std::string prepareWeb2Answer(WEB2_CMD cmd,std::string params);
-
-char bufRecvWeb[BUFFRECVSIZE];
 char bufRecvVrf[BUFFRECVSIZE];
-char bufRecvWeb2[BUFFRECVSIZE];
 
 lws_context *lwscontext = nullptr;
 lws *web_socket = nullptr;
@@ -326,8 +292,6 @@ struct sf_match
 double calcsift(box left,box right,int un,uint64_t id);
 bool siftSort(sf_match a,sf_match b){return a.dist < b.dist;};
 
-enum MODE_VERIFY
-{VERIFY_TIME,VERIFY_COORD,VERIFY_DIST};
 
 double calcClassicZ(double pxDiff,double dl,double dr,double cpx);
 double calcDist(double pxDiff1);
@@ -336,7 +300,7 @@ int main(int argc, char* argv[])
 {
 
 
-    std::thread t_gns = std::thread([&]()
+    /*std::thread t_gns = std::thread([&]()
     {
         gps_mutex = PTHREAD_MUTEX_INITIALIZER;
         int res = pthread_mutex_init(&gps_mutex,nullptr);
@@ -400,11 +364,10 @@ int main(int argc, char* argv[])
 
         close(fd_salmon2blabber);
         std::cout << " t_gns exit \n";
-    });
+    });*/
 
-    // std::thread *thr1 = new std::thread(&thrWebServer);
     std::thread *thr2 = new std::thread(&thrVerifyServer);
-    // std::thread *thr3 = new std::thread(&thrWeb2Server);
+
     // if (thr->joinable()) 
     // thr->join();
 
@@ -644,264 +607,7 @@ double getCalcTimeNs(char* time_date)
 
     return tt;
 }
-// int sendPost()
-// {
-//     std::string curlBuffer;
-//     // запрашиваемая страничка(путь до login screen)
-//     const char *url = "127.0.0.1:8082/test";
-//     // передаваемые параметры
-//     const char *urlPOST = "login=name&password=pass&cmd=login";
-//     // буфер для сохранения текстовых ошибок
-//     char curlErrorBuffer[CURL_ERROR_SIZE];
-//     CURL *curl = curl_easy_init();
-//     if (curl) 
-//     {
-//         //
-//         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curlErrorBuffer);
-//         // задаем URL...
-//         curl_easy_setopt(curl, CURLOPT_URL, url);
-//         // переходить по "Location:" указаному в HTTP заголовке  
-//         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-//         // не проверять сертификат удаленного сервера
-//         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-//         // использовать метод POST для отправки данных
-//         curl_easy_setopt(curl, CURLOPT_POST, 1);
-//         // параметры POST
-//         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, urlPOST);
-//         // функция, вызываемая cURL для записи полученых данных
-//         //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curlBuffer);
-//         //curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteFunc);
-//         // выполнить запрос
-//         CURLcode curlResult = curl_easy_perform(curl);
-//         // завершение сеанса
-//         curl_easy_cleanup(curl);
-//         if (curlResult == CURLE_OK)
-//         {
-//             std::cout << curlBuffer << std::endl;
-//             return(0);
-//         } 
-//         else 
-//         {
-//             std::cout << "Ошибка(" << curlResult << "): " << curlErrorBuffer << std::endl;
-//             return(-1);
-//         }
-//     }
-//         return 0;
-// }
-std::string prepareWebAnswer(WEB_CMD cmd,std::string params)
-{
-    std::string answer;
-    std::string strJson;
 
-    if(params == "get")
-    {
-        strJson.append("{\r");
-                strJson.append("\"id\": 1,\r");
-                strJson.append("\"name\": \"Leanne Graham\",\r");
-                strJson.append("\"username\": \"Bret\",\r");
-                strJson.append("\"email\": \"Sincere@april.biz\",\r");
-                strJson.append("\"address\": {\r");
-                //strJson.append("{\r");
-                        strJson.append("\"street\": \"Kulas Light\",\r");
-                        strJson.append("\"suite\": \"Apt. 556\",\r");
-                        strJson.append("\"city\": \"Gwenborough\",\r");
-                        strJson.append("\"zipcode\": \"92998-3874\",\r");
-                        strJson.append("\"geo\": {\r");
-                            //strJson.append("{\r");
-                                strJson.append("\"lat\": \"-37.3159\",\r");
-                                strJson.append("\"lng\": \"81.1496\"\r");
-                            strJson.append("}\r");
-                strJson.append("},\r");
-                strJson.append("\"phone\": \"1-770-736-8031 x56442\",\r");
-                strJson.append("\"website\": \"hildegard.org\",\r");
-                strJson.append("\"company\": {\r");
-            //strJson.append("{\r");
-                strJson.append("\"name\": \"Romaguera-Crona\",\r");
-                strJson.append("\"catchPhrase\": \"Multi-layered client-server neural-net\",\r");
-                strJson.append("\"bs\": \"harness real-time e-markets\"\r");
-            strJson.append("}\r");
-        strJson.append("}");
-
-        answer.append("HTTP/1.1 200 OK\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-
-    if(params == "post")
-    {
-        strJson.append("{\r");
-            strJson.append("\"why\": \"42\",\r");
-            strJson.append("\"id\": 101\r");
-        strJson.append("}");
-
-        answer.append("HTTP/1.1 201\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Access-Control-Allow-Headers: content-type\r\n");
-        answer.append("Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-
-    if(params == "options")
-    {
-        strJson.append("{\r");
-            strJson.append("\"why\": \"42\",\r");
-            strJson.append("\"id\": 101\r");
-        strJson.append("}");
-
-        answer.append("HTTP/1.1 201\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Access-Control-Allow-Headers: content-type\r\n");
-        answer.append("Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-    
-    return answer;
-}
-int sendWebAnswer(WEB_CMD cmd,std::string params)
-{
-    std::string answer = prepareWebAnswer(cmd,params);
-
-    int n = send(sct_web_new,answer.c_str(),answer.size(),0);
-
-    if (n < 0) 
-    {
-        perror("ERROR writing to socket");
-        return -1;
-    }
-
-    return n;
-}
-void thrWebServer()
-{
-    accept_connectionWeb();
-
-    bool work = true;
-    WEB_CMD cmd = WEB_CMD::web_null;
-    std::string params = "";
-
-	while (work)
-	{
-		if (recvWebMessage(&cmd,&params) > 0)
-		{
-            if(sendWebAnswer(cmd,params) < 0)
-            {
-                printf("Error: sendAnswer\r\n");
-			    reacceptWeb();
-            }
-		}
-        else
-		{ 
-			printf("Error: recvMessage\r\n");
-			reacceptWeb();
-		}
-
-		usleep(1000);
-	}
-}
-int recvWebMessage(WEB_CMD *cmd,std::string *params)
-{
-    bzero(bufRecvWeb,BUFFRECVSIZE);
-    int n = recv(sct_web_new,bufRecvWeb,BUFFRECVSIZE,0);
-
-    if (n < 0) 
-    {
-        perror("ERROR reading from socket");
-        return -1;
-    }
-
-    printf("Here is the message:\r\n%s\r\n",bufRecvWeb);
-
-    *cmd = recvWebParsing(n,params);
-
-    return n;
-}
-WEB_CMD recvWebParsing(int size,std::string *params)
-{
-    std::string bb(bufRecvWeb);
-    size_t resGet = bb.find("GET /test");
-    size_t resOpt = bb.find("OPTIONS /post");
-    size_t resPost = bb.find("POST /post");
-
-    if(resGet != string::npos)
-    *params = "get";
-
-    if(resPost != string::npos)
-    *params = "post";
-
-    if(resOpt != string::npos)
-    *params = "options";
-
-    return WEB_CMD::web_setMode;
-}
-void reacceptWeb()
-{
-    printf("reaccept\r\n");
-	if(sct_web_new > 0)close(sct_web_new);
-	if(sct_web > 0)close(sct_web);
-	accept_connectionWeb();
-}
-int accept_connectionWeb()
-{
-    int portno;
-    portno = 8082;
-    socklen_t clilen;
-
-    struct sockaddr_in serv_addr, cli_addr;
-
-    sct_web = socket(AF_INET, SOCK_STREAM, 0);
-    if (sct_web < 0) 
-    {
-        perror("ERROR opening socket");
-        return -1;
-    }
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(portno);
-
-    if (bind(sct_web, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-    {
-        perror("ERROR on binding");
-        int resSys = system("fuser -k 8082/tcp");//fuser -k 8082/tcp
-        sleep(2);
-        return -2;
-    }
-
-    int res = listen(sct_web,5);
-    if (res < 0) 
-    {
-        perror("ERROR on listen");
-        return -4;
-    }
-
-    clilen = sizeof(cli_addr);
-    sct_web_new = accept(sct_web, (struct sockaddr *) &cli_addr, &clilen);
-
-    if (sct_web_new < 0) 
-    {
-        perror("ERROR on accept");
-        return -3;
-    }
-
-	return 0;
-}
 void thrVerifyServer()
 {
     jpegInit();
@@ -1172,234 +878,8 @@ int sendVerifyAnswer(VRF_CMD cmd,std::string params)
 
     return n;
 }
-std::string prepareWeb2Answer(WEB2_CMD cmd,std::string params)
-{
-    std::string answer;
-    std::string strJson;
 
-    if(params == "get")
-    {
-        strJson.append("{\r");
-                strJson.append("\"id\": 1,\r");
-                strJson.append("\"name\": \"Leanne Graham\",\r");
-                strJson.append("\"username\": \"Bret\",\r");
-                strJson.append("\"email\": \"Sincere@april.biz\",\r");
-                strJson.append("\"address\": {\r");
-                //strJson.append("{\r");
-                        strJson.append("\"street\": \"Kulas Light\",\r");
-                        strJson.append("\"suite\": \"Apt. 556\",\r");
-                        strJson.append("\"city\": \"Gwenborough\",\r");
-                        strJson.append("\"zipcode\": \"92998-3874\",\r");
-                        strJson.append("\"geo\": {\r");
-                            //strJson.append("{\r");
-                                strJson.append("\"lat\": \"-37.3159\",\r");
-                                strJson.append("\"lng\": \"81.1496\"\r");
-                            strJson.append("}\r");
-                strJson.append("},\r");
-                strJson.append("\"phone\": \"1-770-736-8031 x56442\",\r");
-                strJson.append("\"website\": \"hildegard.org\",\r");
-                strJson.append("\"company\": {\r");
-            //strJson.append("{\r");
-                strJson.append("\"name\": \"Romaguera-Crona\",\r");
-                strJson.append("\"catchPhrase\": \"Multi-layered client-server neural-net\",\r");
-                strJson.append("\"bs\": \"harness real-time e-markets\"\r");
-            strJson.append("}\r");
-        strJson.append("}");
 
-        answer.append("HTTP/1.1 200 OK\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-
-    if(params == "post")
-    {
-        strJson.append("{\r");
-            strJson.append("\"why\": \"42\",\r");
-            strJson.append("\"id\": 101\r");
-        strJson.append("}");
-
-        answer.append("HTTP/1.1 201\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Access-Control-Allow-Headers: content-type\r\n");
-        answer.append("Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-
-    if(params == "options")
-    {
-        strJson.append("{\r");
-            strJson.append("\"why\": \"42\",\r");
-            strJson.append("\"id\": 101\r");
-        strJson.append("}");
-
-        answer.append("HTTP/1.1 201\r\n");
-        answer.append("Content-Length: ");
-        answer.append(std::to_string(strJson.size()));
-        answer.append("\r\nContent-Type: application/json; charset=utf-8\r\n");
-        answer.append("Access-Control-Allow-Origin: http://127.0.0.1\r\n");
-        answer.append("Access-Control-Allow-Headers: content-type\r\n");
-        answer.append("Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE\r\n");
-        answer.append("Connection: keep-alive\r\n");
-        answer.append("\r\n");
-        answer.append(strJson);
-    }
-    
-    return answer;
-}
-int sendWeb2Answer(WEB2_CMD cmd,std::string params)
-{
-    return 1;
-    std::string answer = prepareWeb2Answer(cmd,params);
-
-    int n = send(sct_web2_new,answer.c_str(),answer.size(),0);
-
-    if (n < 0) 
-    {
-        perror("ERROR writing to socket");
-        return -1;
-    }
-
-    return n;
-}
-void thrWeb2Server()
-{
-    // accept_connectionWeb2();
-    // bool work = true;
-    // WEB2_CMD cmd = WEB2_CMD::web2_null;
-    // std::string params = "";
-	// while (work)
-	// {
-    //     int res = recvWeb2Message(&cmd,&params);
-	// 	if (res > 0)
-	// 	{
-    //         if(sendWeb2Answer(cmd,params) < 0)
-    //         {
-    //             printf("Error: sendAnswer\r\n");
-	// 		    reacceptWeb2();
-    //         }
-	// 	}
-    //     else
-	// 	{ 
-    //         if(res != 0)
-    //         {
-	// 		    printf("Error: recvMessage\r\n");
-	// 		    reacceptWeb2();
-    //         }
-    //         else sleep(1);
-	// 	}
-	// 	usleep(1000);
-	// }
-
-    lwsInit();
-
-	sleep(3);
-
-	while (true)
-	{
-		usleep(50000);
-		lwsMain();
-	};
-
-}
-int recvWeb2Message(WEB2_CMD *cmd,std::string *params)
-{
-    bzero(bufRecvWeb2,BUFFRECVSIZE);
-    int n = recv(sct_web2_new,bufRecvWeb2,BUFFRECVSIZE,0);
-
-    if (n < 0) 
-    {
-        perror("ERROR reading from socket");
-        return -1;
-    }
-
-    printf("Here is the message[%d]:\r\n%s\r\n",n,bufRecvWeb2);
-
-    *cmd = recvWeb2Parsing(n,params);
-
-    return n;
-}
-WEB2_CMD recvWeb2Parsing(int size,std::string *params)
-{
-    std::string bb(bufRecvWeb);
-    size_t resGet = bb.find("GET /test");
-    size_t resOpt = bb.find("OPTIONS /post");
-    size_t resPost = bb.find("POST /post");
-
-    if(resGet != string::npos)
-    *params = "get";
-
-    if(resPost != string::npos)
-    *params = "post";
-
-    if(resOpt != string::npos)
-    *params = "options";
-
-    return WEB2_CMD::web2_setMode;
-}
-void reacceptWeb2()
-{
-    printf("reaccept\r\n");
-	if(sct_web2_new > 0)close(sct_web2_new);
-	if(sct_web2 > 0)close(sct_web2);
-	accept_connectionWeb2();
-}
-int accept_connectionWeb2()
-{
-    int portno;
-    portno = 8083;
-    socklen_t clilen;
-
-    struct sockaddr_in serv_addr, cli_addr;
-
-    sct_web2 = socket(AF_INET, SOCK_STREAM, 0);
-    if (sct_web2 < 0) 
-    {
-        perror("ERROR opening socket");
-        return -1;
-    }
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(portno);
-
-    if (bind(sct_web2, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-    {
-        perror("ERROR on binding");
-        int resSys = system("fuser -k 8083/tcp");//fuser -k 8082/tcp
-        sleep(2);
-        return -2;
-    }
-
-    int res = listen(sct_web2,5);
-    if (res < 0) 
-    {
-        perror("ERROR on listen");
-        return -4;
-    }
-
-    clilen = sizeof(cli_addr);
-    sct_web2_new = accept(sct_web2, (struct sockaddr *) &cli_addr, &clilen);
-
-    if (sct_web2_new < 0) 
-    {
-        perror("ERROR on accept");
-        return -3;
-    }
-
-	return 0;
-}
 int lwsInit()
 {
 	//memset(&info, 0, sizeof(lws_context_creation_info));
@@ -2193,7 +1673,7 @@ double calcsift(box left,box right,int un,uint64_t id)
 	//printf("load file-left:%s\n", fileLeft);
 	//printf("load file-right:%s\n", fileRight);
 
-	cv::Ptr<SIFT> sift = SIFT::create(0, 6, contrast, edge, sigma);//0, 4, 0.04, 10, 1.6//0.1 20 2
+	//cv::Ptr<SIFT> sift = SIFT::create(0, 6, contrast, edge, sigma);//0, 4, 0.04, 10, 1.6//0.1 20 2
 
     vector<KeyPoint> keypointsLeft;
     Mat descriptorsLeft;
@@ -2302,12 +1782,12 @@ double calcsift(box left,box right,int un,uint64_t id)
 
 /****************/
 
-    sift->detect(mLeft, keypointsLeft);
+    /*sift->detect(mLeft, keypointsLeft);
     sift->compute(mLeft, keypointsLeft, descriptorsLeft);
 
     sift->detect(mRight, keypointsRight);
     sift->compute(mRight, keypointsRight, descriptorsRight);
-
+*/
     if(keypointsLeft.size() == 0 || (int)keypointsRight.size() == 0)
     {
       free(left_pict_ts);
