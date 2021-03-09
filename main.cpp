@@ -23,7 +23,7 @@
 #include <sys/ioctl.h>
 #include <time.h>
 
-#include "../salmon/common/cmn.h"
+#include "common/cmn.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/chrono.hpp>

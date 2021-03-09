@@ -1,0 +1,19 @@
+image: gcc:8
+
+stages:
+  - build
+  - test
+
+build-code-job:
+  stage: build
+  script:
+    - echo "Building"
+    - apt-get update --yes
+    - apt-get install --yes cmake
+
+    # mkdir, cmake, build, ctest, make install, run.sh
+
+test-code-job:
+  stage: test
+  script:
+    - echo "Running test:"
