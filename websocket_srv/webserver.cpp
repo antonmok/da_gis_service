@@ -16,7 +16,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <glog/logging.h>
+#include "../common/logger.h"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -251,6 +251,8 @@ int main(int argc, char* argv[])
             "    websocket_srv 8083 1\n";
         return EXIT_FAILURE;
     }
+
+    InitLogger(argv);
 
     auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
     auto const threads = std::max<int>(1, std::atoi(argv[2]));

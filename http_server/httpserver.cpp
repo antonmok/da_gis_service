@@ -14,12 +14,11 @@
 #include <memory>
 #include <thread>
 #include <vector>
-#include <glog/logging.h>
+#include "../common/logger.h"
 
 #include "api/api_handler.h"
 
 #define SERVER_VERSION_STRING       "blabber/1.0 (Linux)"
-#define GLOG_AUTO_CLEAN_AFTER_DAYS  30  // keep your logs for 30 days
 
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
@@ -564,14 +563,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Initialize Google’s logging library.
-#ifdef NDEBUG
-    FLAGS_logtostderr = 0;
-#else
-    FLAGS_logtostderr = 1;
-#endif
-    google::InitGoogleLogging(argv[0]);
-    google::EnableLogCleaner(GLOG_AUTO_CLEAN_AFTER_DAYS);
+    InitLogger(argv);
 
     auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
     auto const doc_root = std::make_shared<std::string>(argv[2]);
