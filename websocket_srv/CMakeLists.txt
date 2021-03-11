@@ -10,14 +10,19 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package (glog 0.5.0 REQUIRED)
 
-#set(H_CONFIG_FILES )
+include_directories(${PROJECT_SOURCE_DIR})
 
 set(CPP_FILES
-    webserver.cpp)
+    protocol/socket_protocol.cpp)
 
-add_executable(${PROJECT_NAME} ${CPP_FILES})
+set(CPP_TEST_FILES
+    )
+
+add_executable(${PROJECT_NAME} socket_server.cpp ${CPP_FILES})
+#add_executable(${PROJECT_NAME}_test ${CPP_FILES} ${CPP_TEST_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads glog::glog)
+#target_link_libraries(${PROJECT_NAME}_test PRIVATE Threads::Threads glog::glog)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
-
+#add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)

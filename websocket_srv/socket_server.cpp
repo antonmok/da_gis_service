@@ -16,7 +16,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #include "../common/logger.h"
+#include "protocol/socket_protocol.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -124,9 +126,12 @@ public:
 
         DLOG(INFO) << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
 
+        std::string answer;
+        CSocketProtocolHandler::Instance().HandleProtocolCommand(beast::buffers_to_string(buffer_.data()), answer);
+
         // Echo the message
         ws_.async_write(
-            buffer_.data(),
+            net::buffer(answer),
             beast::bind_front_handler(
                 &CWSSession::on_write,
                 shared_from_this()));
