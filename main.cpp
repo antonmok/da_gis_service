@@ -1005,7 +1005,7 @@ int ws_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, v
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
         {
             printf("LWS_CALLBACK_CLIENT_CONNECTION_ERROR\r\n");
-            printf("[%d]%s\r\n",len,in);
+            printf("[%ld]%s\r\n",len,(char*)in);
             web_socket = nullptr;
             break;
         }
@@ -1472,7 +1472,8 @@ void readAndCompress(MODE_VERIFY mode)
     cv::Mat retRight;
 
     //ADD DRAW RECOGN FRAME
-    savePassage((char*)imgsum,(char*)(imgsum + IMAGE_HEIGHT*IMAGE_WIDTH),time,"2102999",&retLeft,&retRight/*ADD BOX FRAME FOR VERIFY_DIST*/);
+    char number[] = "2102999";
+    savePassage((char*)imgsum,(char*)((char*)imgsum + IMAGE_HEIGHT*IMAGE_WIDTH),time,number,&retLeft,&retRight/*ADD BOX FRAME FOR VERIFY_DIST*/);
 
     int nJpegSize1 = jpegProc((unsigned char*)dst_jpg_mem1,IMAGE_HEIGHT*IMAGE_WIDTH,(unsigned char*)retLeft.data);
     int nJpegSize2 = jpegProc((unsigned char*)dst_jpg_mem2,IMAGE_HEIGHT*IMAGE_WIDTH,(unsigned char*)(retRight.data));
@@ -1550,7 +1551,7 @@ int readFrame(uint64_t *id,uint64_t *time,double *lat,double *lon)
         else 
         {
             printf("writeFrame mutex busy!!\r\n");
-            printf("last_id = [%d]\r\n",last_index);
+            printf("last_id = [%ld]\r\n",last_index);
         }
     }
 
@@ -1991,7 +1992,7 @@ int readPartFrame(box bx,void *pic)
           //if(pthread_mutex_trylock(&ipc_mutex[i]) == 0)
           //{
               for(int j = 0;j < bx.h;j++)
-                  memcpy((void*)(pic + j*bx.w),img_buffer->frame[i].buf + bx.y*IMAGE_WIDTH+bx.x + j*IMAGE_WIDTH,bx.w);
+                  memcpy((void*)((char*)pic + j*bx.w),img_buffer->frame[i].buf + bx.y*IMAGE_WIDTH+bx.x + j*IMAGE_WIDTH,bx.w);
 
               res = true;
 
