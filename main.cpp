@@ -77,8 +77,8 @@
 
 
 
-#define SIFT_IS_NOT_FINISHED -1// задержка распознавнаия символов
-#define SIFT_IS_IMPOSSIBLE 99999// СИФТ НИЧЕГ НЕ НАШЕЛ
+#define SIFT_IS_NOT_FINISHED -1// задержка распознавания символов
+#define SIFT_IS_IMPOSSIBLE 99999// СИФТ НИЧЕГО НЕ НАШЕЛ
 
 using namespace std;
 using namespace cv;
