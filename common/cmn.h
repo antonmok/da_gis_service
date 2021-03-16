@@ -1,20 +1,18 @@
-#pragma once
-
 #define IMAGE_HEIGHT 1200
 #define IMAGE_WIDTH 1920
 
-#define SALMON_PATH "/salmon"
-#define SALMON_IDS_PATH "/salmon_ids"
+constexpr auto& SALMON_PATH = "/salmon";
+constexpr auto& SALMON_IDS_PATH = "/salmon_ids";
 
-#define TROUT_PATH "/trout"
-#define TROUT_IDS_PATH "/trout_ids"
+constexpr auto& TROUT_PATH = "/trout";
+constexpr auto& TROUT_IDS_PATH = "/trout_ids";
 
-#define PIPE_TROUT_TO_PROC "/tmp/trout-to-proc" //transmit only ts frame
-#define PIPE_TROUT_TO_COD "/tmp/trout-to-cod" //transmit only grz frame
-#define PIPE_TROUT_TO_PROC2 "/tmp/trout-to-sproc" //transmit only sign frame
-#define PIPE_COD_TO_PROC "/tmp/cod-to-proc" //transmit only grz text
+constexpr auto& PIPE_TROUT_TO_PROC = "/tmp/trout-to-proc";    // transmit only ts frame
+constexpr auto& PIPE_TROUT_TO_COD = "/tmp/trout-to-cod";      // transmit only grz frame
+//constexpr auto& PIPE_TROUT_TO_PROC2 = "/tmp/trout-to-sproc";  // transmit only sign frame
+constexpr auto& PIPE_COD_TO_PROC = "/tmp/cod-to-proc";        // transmit only grz text
 
-#define PIPE_SALMON_TO_BLABBER "/tmp/salmon-to-blabber" //transmit only gns
+constexpr auto& PIPE_SALMON_TO_BLABBER = "/tmp/salmon-to-blabber"; //transmit only gns
 
 #define SALMON_SIZE 800
 #define TROUT_SIZE 800
@@ -61,6 +59,8 @@ struct box
     char desc[DESC_SIZE];
     short int side;                 //0-left,1-right
     uint64_t uniq;
+    //uint64_t time_first;
+    //uint64_t time_second;
 };
 
 struct gns_actualy
