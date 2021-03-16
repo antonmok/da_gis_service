@@ -1,18 +1,18 @@
 #define IMAGE_HEIGHT 1200
 #define IMAGE_WIDTH 1920
 
-constexpr auto& SALMON_PATH = "/salmon";
-constexpr auto& SALMON_IDS_PATH = "/salmon_ids";
+inline constexpr auto& SALMON_PATH = "/salmon";
+inline constexpr auto& SALMON_IDS_PATH = "/salmon_ids";
 
-constexpr auto& TROUT_PATH = "/trout";
-constexpr auto& TROUT_IDS_PATH = "/trout_ids";
+inline constexpr auto& TROUT_PATH = "/trout";
+inline constexpr auto& TROUT_IDS_PATH = "/trout_ids";
 
-constexpr auto& PIPE_TROUT_TO_PROC = "/tmp/trout-to-proc";    // transmit only ts frame
-constexpr auto& PIPE_TROUT_TO_COD = "/tmp/trout-to-cod";      // transmit only grz frame
-//constexpr auto& PIPE_TROUT_TO_PROC2 = "/tmp/trout-to-sproc";  // transmit only sign frame
-constexpr auto& PIPE_COD_TO_PROC = "/tmp/cod-to-proc";        // transmit only grz text
+inline constexpr auto& PIPE_TROUT_TO_PROC = "/tmp/trout-to-proc";    // transmit only ts frame
+inline constexpr auto& PIPE_TROUT_TO_COD = "/tmp/trout-to-cod";      // transmit only grz frame
+//inline constexpr auto& PIPE_TROUT_TO_PROC2 = "/tmp/trout-to-sproc";  // transmit only sign frame
+inline constexpr auto& PIPE_COD_TO_PROC = "/tmp/cod-to-proc";        // transmit only grz text
 
-constexpr auto& PIPE_SALMON_TO_BLABBER = "/tmp/salmon-to-blabber"; //transmit only gns
+inline constexpr auto& PIPE_SALMON_TO_BLABBER = "/tmp/salmon-to-blabber"; //transmit only gns
 
 #define SALMON_SIZE 800
 #define TROUT_SIZE 800
