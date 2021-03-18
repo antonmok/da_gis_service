@@ -125,8 +125,6 @@ public:
         // Set data type (text/binary)
         ws_.text(ws_.got_text());
 
-        DLOG(INFO) << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
-
         std::string answer;
         if (CSocketProtocolHandler::Instance().HandleProtocolCommand(beast::buffers_to_string(buffer_.data()), answer)) {
 
