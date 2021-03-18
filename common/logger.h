@@ -4,7 +4,7 @@
 
 #define GLOG_AUTO_CLEAN_AFTER_DAYS  30  // keep your logs for 30 days
 
-inline void InitLogger(char** argv)
+inline void InitLogger(char* name)
 {
     // Initialize Google’s logging library.
 #ifdef NDEBUG
@@ -12,6 +12,6 @@ inline void InitLogger(char** argv)
 #else
     FLAGS_logtostderr = 1;
 #endif
-    google::InitGoogleLogging(argv[0]);
+    google::InitGoogleLogging(name);
     google::EnableLogCleaner(GLOG_AUTO_CLEAN_AFTER_DAYS);
 }

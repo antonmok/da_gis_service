@@ -13,7 +13,11 @@ find_package (glog 0.5.0 REQUIRED)
 include_directories(${PROJECT_SOURCE_DIR})
 
 set(CPP_FILES
-    protocol/socket_protocol.cpp)
+    protocol/socket_protocol.cpp
+    ${CMAKE_HOME_DIRECTORY}/shared_image/shared_image.cpp
+    ${CMAKE_HOME_DIRECTORY}/shared_image/shared_memory.cpp
+    ${CMAKE_HOME_DIRECTORY}/shared_image/rwlock.cpp
+    ${CMAKE_HOME_DIRECTORY}/base64.c)
 
 set(CPP_TEST_FILES
     )
@@ -21,8 +25,8 @@ set(CPP_TEST_FILES
 add_executable(${PROJECT_NAME} socket_server.cpp ${CPP_FILES})
 #add_executable(${PROJECT_NAME}_test ${CPP_FILES} ${CPP_TEST_FILES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads glog::glog)
-#target_link_libraries(${PROJECT_NAME}_test PRIVATE Threads::Threads glog::glog)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS} Threads::Threads glog::glog rt jpeg)
+#target_link_libraries(${PROJECT_NAME}_test PRIVATE Threads::Threads glog::glog rt jpeg)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 #add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)

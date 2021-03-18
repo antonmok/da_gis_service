@@ -14,6 +14,7 @@ struct CCommandNames
 {
     static constexpr auto startStreaming = "StartStreaming"sv;
     static constexpr auto stopStreaming = "StopStreaming"sv;
+    static constexpr auto getFrame = "GetFrame"sv;
 };
 
 // TODO: RnD

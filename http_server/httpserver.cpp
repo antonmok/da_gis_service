@@ -563,7 +563,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    InitLogger(argv);
+    InitLogger(argv[0]);
 
     auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
     auto const doc_root = std::make_shared<std::string>(argv[2]);

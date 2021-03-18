@@ -19,6 +19,7 @@
 
 #include "../common/logger.h"
 #include "protocol/socket_protocol.hpp"
+#include "shared_image/shared_image.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -127,14 +128,19 @@ public:
         DLOG(INFO) << "recv: " << beast::make_printable(buffer_.data()) << std::endl;
 
         std::string answer;
-        CSocketProtocolHandler::Instance().HandleProtocolCommand(beast::buffers_to_string(buffer_.data()), answer);
+        if (CSocketProtocolHandler::Instance().HandleProtocolCommand(beast::buffers_to_string(buffer_.data()), answer)) {
 
-        // Echo the message
-        ws_.async_write(
-            net::buffer(answer),
-            beast::bind_front_handler(
-                &CWSSession::on_write,
-                shared_from_this()));
+            if (answer.size() == 0) {
+                DLOG(INFO) << "bad request: " << beast::buffers_to_string(buffer_.data());
+                return;
+            }
+
+            ws_.async_write(
+                net::buffer(answer),
+                beast::bind_front_handler(
+                    &CWSSession::on_write,
+                    shared_from_this()));
+        }
     }
 
     void
@@ -247,17 +253,20 @@ private:
 
 int main(int argc, char* argv[])
 {
+    InitLogger(argv[0]);
+
     // Check command line arguments.
     if (argc != 3)
     {
-        std::cerr <<
+        LOG(ERROR) <<
             "Usage: websocket_srv <port> <threads>\n" <<
             "Example:\n" <<
             "    websocket_srv 8083 1\n";
         return EXIT_FAILURE;
     }
 
-    InitLogger(argv);
+    auto& shared_img = CSharedImage::Instance();
+    std::thread sharedImgThread(&CSharedImage::ImageReaderThread, shared_img.GetPointer());
 
     auto const port = static_cast<unsigned short>(std::atoi(argv[1]));
     auto const threads = std::max<int>(1, std::atoi(argv[2]));
