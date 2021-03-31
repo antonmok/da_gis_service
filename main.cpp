@@ -1400,7 +1400,7 @@ int jpegProc(unsigned char *outbuf, int allSize, unsigned char *image_buffer)
 	cinfo.in_color_space = JCS_GRAYSCALE; /* colorspace of input image */
 	jpeg_set_defaults(&cinfo);
 
-	jpeg_start_compress(&cinfo, true);
+	jpeg_start_compress(&cinfo, TRUE);
 
 	JSAMPROW row_pointer[1];        /* pointer to a single row */
 	int row_stride;                 /* physical row width in buffer */

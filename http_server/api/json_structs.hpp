@@ -100,3 +100,83 @@ std::string StructToJson(const T& data)
     json::value json_val(json::value_from(data));
     return json::serialize(json_val);
 }
+
+struct JSAuto {
+    std::vector<std::string> fines;
+};
+
+struct JSMode {
+    unsigned speedLimit;
+    unsigned maxFines;
+    unsigned period;
+    unsigned pause;
+};
+
+struct JSDelayRec {
+    unsigned duration;
+};
+
+struct JSModeSettings {
+    JSAuto auto_;
+    JSMode automated;
+    JSMode combi;
+    JSDelayRec delayRec;
+};
+
+struct JSMobile {
+    bool isOn;
+};
+
+struct JSGrs {
+    bool sound;
+    bool banners;
+};
+
+struct JSNotifications {
+    JSGrs grs;
+};
+
+struct JSSounds {
+    std::string notify;
+};
+
+struct JSSettings {
+    JSMobile mobile;
+    JSNotifications notifications;
+    JSSounds sounds;
+};
+
+
+/*!
+ * @brief: Все настройки пользователя.
+ */
+struct JSSettingsResp {
+  bool speed;       // включены или выключены внопки во втором тулбаре
+  bool park;        //
+  bool trajectory;  //
+  std::vector<JSModeSettings> defaultModesSettings; // настройки режимов по умолчанию (заводские настройки, либо использованные последний раз)
+  std::vector<JSModeSettings> modesSettingsPacks;   // массив сохраненных наборов настроек
+
+  std::string lastMode; // название или id последнего использованного режима ('combi')
+  JSSettings settings;  // настройки уведомлений, звуков и тд
+  std::vector<std::string> permissions; // объект со всей информацией, что пользователь может/не может использовать/конфигурировать (задается админом)
+};
+
+/*### Мобильный интернет
+
+route: 
+method: POST,
+body: {
+  isOn: true/false,
+  turnOff: true/false,
+  turnOn: true/false
+},
+response: {
+  success,
+  isOn: true/false
+},
+description: команда на включение/выключение мобильного интернета. Передаю текущее состояние и команду, выключить/включить. В ответ жду сообщение о успешности и новое состояние.
+Думал еще это через сокеты реализовать, но так, наверное, будет надежнее.
+
+
+*/

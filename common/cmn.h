@@ -1,6 +1,9 @@
 #define IMAGE_HEIGHT 1200
 #define IMAGE_WIDTH 1920
 
+#define IMAGE_WEB_HEIGHT    IMAGE_HEIGHT / 2
+#define IMAGE_WEB_WIDTH     IMAGE_WIDTH / 2
+
 inline constexpr auto& SALMON_PATH = "/salmon";
 inline constexpr auto& SALMON_IDS_PATH = "/salmon_ids";
 

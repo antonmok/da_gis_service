@@ -6,6 +6,7 @@
 #include "shared_memory.h"
 #include "common/types.hpp"
 #include "common/cmn.h"
+
 #include <jpeglib.h>
 
 class CSharedImage {

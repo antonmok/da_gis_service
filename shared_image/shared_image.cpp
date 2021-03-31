@@ -15,6 +15,8 @@
 #include "common/logger.h"
 #include "base64.h"
 
+//#include "cdjpeg.h" // set_quality_ratings
+
 void savePassage(char* left_fact, char* right_fact, uint64_t ttime, const char* number, cv::Mat* retLeft, cv::Mat* retRight);
 
 CSharedImage& CSharedImage::Instance()
@@ -95,17 +97,18 @@ int CSharedImage::JpegProc(unsigned char *outbuf, int allSize, unsigned char *im
 
 	jpeg_mem_dest(&cinfo_, &outbuf, &outsize);
 
-	cinfo_.image_width = IMAGE_WIDTH;      /* image width and height, in pixels */
-	cinfo_.image_height = IMAGE_HEIGHT;
+	cinfo_.image_width = IMAGE_WEB_WIDTH;      /* image width and height, in pixels */
+	cinfo_.image_height = IMAGE_WEB_HEIGHT;
 	cinfo_.input_components = 1;     /* # of color components per pixel */
 	cinfo_.in_color_space = JCS_GRAYSCALE; /* colorspace of input image */
-	jpeg_set_defaults(&cinfo_);
 
-	jpeg_start_compress(&cinfo_, true);
+	jpeg_set_defaults(&cinfo_);
+    jpeg_set_quality(&cinfo_, 70, TRUE);
+	jpeg_start_compress(&cinfo_, TRUE);
 
 	JSAMPROW row_pointer[1];        /* pointer to a single row */
 	int row_stride;                 /* physical row width in buffer */
-	row_stride = IMAGE_WIDTH * 1;   /* JSAMPLEs per row in image_buffer */
+	row_stride = IMAGE_WEB_WIDTH * 1;   /* JSAMPLEs per row in image_buffer */
 	while ((cinfo_.next_scanline < cinfo_.image_height)) {
 		row_pointer[0] = &image_buffer[cinfo_.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo_, row_pointer, 1);
@@ -138,16 +141,18 @@ void CSharedImage::ImageReaderThread()
 
         savePassage((char*)imgsum_, (char*)((char*)imgsum_ + IMAGE_HEIGHT * IMAGE_WIDTH), time_, num_str, &retLeft, &retRight);
 
-        auto t1 = std::chrono::high_resolution_clock::now();
-        std::chrono::milliseconds t1ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1.time_since_epoch());
+        /*auto t1 = std::chrono::high_resolution_clock::now();
+        std::chrono::milliseconds t1ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1.time_since_epoch());*/
 
-        int nJpegSize1 = JpegProc((unsigned char*)dst_jpg_mem1_, IMAGE_HEIGHT * IMAGE_WIDTH, (unsigned char*)retLeft.data);
-        int nJpegSize2 = JpegProc((unsigned char*)dst_jpg_mem2_, IMAGE_HEIGHT * IMAGE_WIDTH, (unsigned char*)retRight.data);
+        int nJpegSize1 = JpegProc((unsigned char*)dst_jpg_mem1_, IMAGE_WEB_HEIGHT * IMAGE_WEB_WIDTH, (unsigned char*)retLeft.data);
+        int nJpegSize2 = JpegProc((unsigned char*)dst_jpg_mem2_, IMAGE_WEB_HEIGHT * IMAGE_WEB_WIDTH, (unsigned char*)retRight.data);
 
         auto t2 = std::chrono::high_resolution_clock::now();
         std::chrono::milliseconds t2ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2.time_since_epoch());
 
         //DLOG_EVERY_N(INFO, 50) << "jpeg compression time: " << (t2ms - t1ms).count() << std::endl;
+        //DLOG_EVERY_N(INFO, 25) << "jpeg compressed size: " << nJpegSize1 << std::endl;
+        //DLOG_EVERY_N(INFO, 25) << "jpeg compressed dimessions: " << cinfo_.jpeg_width << " x " << cinfo_.jpeg_height << std::endl;
 
         int leftRes = ConvertToBase64(left_b64_, (unsigned char*)dst_jpg_mem1_, nJpegSize1);
         int rightRes = ConvertToBase64(right_b64_, (unsigned char*)dst_jpg_mem2_, nJpegSize2);
@@ -163,31 +168,31 @@ void CSharedImage::ImageReaderThread()
 
 void savePassage(char* left_fact, char* right_fact, uint64_t ttime, const char* number, cv::Mat* retLeft, cv::Mat* retRight)
 {
-  int hblackString = 200;
+    int hblackString = 200;
 
-  cv::Mat mFullLeft(IMAGE_HEIGHT + hblackString,IMAGE_WIDTH,CV_8UC1);
-  cv::Mat mFullRight(IMAGE_HEIGHT + hblackString,IMAGE_WIDTH,CV_8UC1);
+    cv::Mat mFullLeft(IMAGE_HEIGHT + hblackString,IMAGE_WIDTH,CV_8UC1);
+    cv::Mat mFullRight(IMAGE_HEIGHT + hblackString,IMAGE_WIDTH,CV_8UC1);
 
-  cv::Mat mLeft(IMAGE_HEIGHT,IMAGE_WIDTH, CV_8UC1, (void*)left_fact);
-  cv::Mat mRight(IMAGE_HEIGHT,IMAGE_WIDTH, CV_8UC1, (void*)right_fact);
+    cv::Mat mLeft(IMAGE_HEIGHT,IMAGE_WIDTH, CV_8UC1, (void*)left_fact);
+    cv::Mat mRight(IMAGE_HEIGHT,IMAGE_WIDTH, CV_8UC1, (void*)right_fact);
 
-  mLeft.copyTo(mFullLeft(cv::Rect(0,0,IMAGE_WIDTH,IMAGE_HEIGHT)));
-  mRight.copyTo(mFullRight(cv::Rect(0,0,IMAGE_WIDTH,IMAGE_HEIGHT)));
+    mLeft.copyTo(mFullLeft(cv::Rect(0,0,IMAGE_WIDTH,IMAGE_HEIGHT)));
+    mRight.copyTo(mFullRight(cv::Rect(0,0,IMAGE_WIDTH,IMAGE_HEIGHT)));
 
-  cv::Point p0(0,IMAGE_HEIGHT), p1(IMAGE_WIDTH, IMAGE_HEIGHT + hblackString);
-  cv::rectangle(mFullLeft, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
-  cv::rectangle(mFullRight, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
+    cv::Point p0(0,IMAGE_HEIGHT), p1(IMAGE_WIDTH, IMAGE_HEIGHT + hblackString);
+    cv::rectangle(mFullLeft, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
+    cv::rectangle(mFullRight, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
 
-  char str_left[1024] = {0};
-  char str_right[1024] = {0};
+    char str_left[1024] = {0};
+    char str_right[1024] = {0};
 
-  time_t tt = ttime / 1000000;
-  int tt_ms = ttime - tt*1000000;
-  std::tm *ptm = std::localtime(&tt);
+    time_t tt = ttime / 1000000;
+    int tt_ms = ttime - tt*1000000;
+    std::tm *ptm = std::localtime(&tt);
 
-  sprintf(str_left,"TANDEM LEFT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
+    sprintf(str_left,"TANDEM LEFT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
 
-  cv::putText(mFullLeft, 
+    cv::putText(mFullLeft,
             str_left,
             cv::Point(15,IMAGE_HEIGHT + 45), // Coordinates
             cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
@@ -196,9 +201,9 @@ void savePassage(char* left_fact, char* right_fact, uint64_t ttime, const char* 
             3); // Line Thickness (Optional)
             //cv::CV_AA); // Anti-alias (Optional)
 
-  sprintf(str_right,"TANDEM RIGHT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
+    sprintf(str_right,"TANDEM RIGHT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
 
-  cv::putText(mFullRight, 
+    cv::putText(mFullRight,
             str_right,
             cv::Point(15,IMAGE_HEIGHT + 45), // Coordinates
             cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
@@ -207,16 +212,16 @@ void savePassage(char* left_fact, char* right_fact, uint64_t ttime, const char* 
             3); // Line Thickness (Optional)
             //cv::CV_AA); // Anti-alias (Optional)
 
-  //cv::imwrite("/mnt/m2/blabber/hjh.jpg",mFullLeft);
-  //cv::imwrite("/mnt/m2/blabber/hjh2.jpg",mFullRight);
+    cv::resize(mFullLeft, mFullLeft, cv::Size(IMAGE_WEB_WIDTH, IMAGE_WEB_HEIGHT));
+    cv::resize(mFullRight, mFullRight, cv::Size(IMAGE_WEB_WIDTH, IMAGE_WEB_HEIGHT));
 
-  *retLeft = mFullLeft.clone();
-  *retRight = mFullRight.clone();
+    *retLeft = mFullLeft.clone();
+    *retRight = mFullRight.clone();
 
-  int jj = retLeft->cols;
-  int jj2 = retLeft->rows;
+    int jj = retLeft->cols;
+    int jj2 = retLeft->rows;
 
-  return;
+    return;
 }
 
 void CSharedImage::CompressRawImage()
