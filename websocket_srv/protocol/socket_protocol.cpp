@@ -39,7 +39,11 @@ bool CSocketProtocolHandler::HandleProtocolCommand(const std::string& request, s
         // start sending
     } else if (cmd == SocketControlCmd::getFrame) {
         CSharedImage::Instance().GetBase64Frame(data);
-        if (utf8_check_is_valid(data)) return true;
+        if (utf8_check_is_valid(data)) {
+            return true;
+        } else {
+            LOG(ERROR) << "not utf8 chars in base64";
+        }
     }
     return false;
 }

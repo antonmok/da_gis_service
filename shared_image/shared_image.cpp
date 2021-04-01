@@ -1,6 +1,7 @@
 
 #include <thread>
 #include <iostream>
+#include <iomanip>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -36,9 +37,15 @@ void CSharedImage::JpegInit()
 	memset(&jerr_, 0, sizeof(jpeg_error_mgr));
 }
 
+void CSharedImage::SetJpegQuality(unsigned quality)
+{
+    jpegQuality_ = quality;
+}
+
 CSharedImage::CSharedImage()
 {
     JpegInit();
+    SetJpegQuality(50);
 
     imgsum_ = malloc(IMAGE_HEIGHT * 2 * IMAGE_WIDTH);
     dst_jpg_mem1_ = malloc(IMAGE_HEIGHT * IMAGE_WIDTH);
@@ -103,7 +110,7 @@ int CSharedImage::JpegProc(unsigned char *outbuf, int allSize, unsigned char *im
 	cinfo_.in_color_space = JCS_GRAYSCALE; /* colorspace of input image */
 
 	jpeg_set_defaults(&cinfo_);
-    jpeg_set_quality(&cinfo_, 70, TRUE);
+    jpeg_set_quality(&cinfo_, jpegQuality_, TRUE);
 	jpeg_start_compress(&cinfo_, TRUE);
 
 	JSAMPROW row_pointer[1];        /* pointer to a single row */
@@ -135,11 +142,11 @@ void CSharedImage::ImageReaderThread()
 
         ReadSharedMem();
 
-        const char* num_str = "9999";
+        const char* num_str = "xxxx";
         cv::Mat retLeft;
         cv::Mat retRight;
 
-        savePassage((char*)imgsum_, (char*)((char*)imgsum_ + IMAGE_HEIGHT * IMAGE_WIDTH), time_, num_str, &retLeft, &retRight);
+        savePassage((char*)imgsum_, (char*)((char*)imgsum_ + IMAGE_HEIGHT * IMAGE_WIDTH), lastTime_, num_str, &retLeft, &retRight);
 
         /*auto t1 = std::chrono::high_resolution_clock::now();
         std::chrono::milliseconds t1ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1.time_since_epoch());*/
@@ -183,32 +190,40 @@ void savePassage(char* left_fact, char* right_fact, uint64_t ttime, const char* 
     cv::rectangle(mFullLeft, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
     cv::rectangle(mFullRight, p0,p1, cv::Scalar(0, 0, 0),cv::FILLED);
 
-    char str_left[1024] = {0};
-    char str_right[1024] = {0};
+    //char str_left[1024] = {0};
+    //char str_right[1024] = {0};
 
-    time_t tt = ttime / 1000000;
+    /*time_t tt = ttime / 1000000;
     int tt_ms = ttime - tt*1000000;
-    std::tm *ptm = std::localtime(&tt);
+    std::tm *ptm = std::localtime(&tt);*/
 
-    sprintf(str_left,"TANDEM LEFT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
+    std::time_t temp = ttime / 1000;
+    std::tm* t = std::localtime(&temp);
+    std::stringstream ss;
+    ss << std::put_time(t, "TANDEM LEFT %Y-%m-%d %T");
+    std::string frame_label = ss.str();
+
+    //sprintf(str_left,"TANDEM LEFT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
 
     cv::putText(mFullLeft,
-            str_left,
+            frame_label.c_str(),
             cv::Point(15,IMAGE_HEIGHT + 45), // Coordinates
             cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
             2.0, // Scale. 2.0 = 2x bigger
-            cv::Scalar(0, 0, 0), // BGR Color
+            cv::Scalar(255, 255, 255), // BGR Color
             3); // Line Thickness (Optional)
             //cv::CV_AA); // Anti-alias (Optional)
 
-    sprintf(str_right,"TANDEM RIGHT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
+    //sprintf(str_right,"TANDEM RIGHT %s %d-%02d-%02d %02d:%02d:%02d.%06d",number,ptm->tm_year + 1900,ptm->tm_mon + 1,ptm->tm_mday,ptm->tm_hour,ptm->tm_min,ptm->tm_sec,tt_ms);
+    ss << std::put_time(t, "TANDEM RIGHT %Y-%m-%d %T");
+    frame_label = ss.str();
 
     cv::putText(mFullRight,
-            str_right,
+            frame_label.c_str(),
             cv::Point(15,IMAGE_HEIGHT + 45), // Coordinates
             cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
             2.0, // Scale. 2.0 = 2x bigger
-            cv::Scalar(0, 0, 0), // BGR Color
+            cv::Scalar(255, 255, 255), // BGR Color
             3); // Line Thickness (Optional)
             //cv::CV_AA); // Anti-alias (Optional)
 

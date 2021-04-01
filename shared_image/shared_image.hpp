@@ -29,6 +29,8 @@ public:
     void GetNthBase64Frame(std::string& base64Img, unsigned idx) const;
     void GetNthRawFrame(byte_ptr bmpImg, unsigned idx) const;
 
+    void SetJpegQuality(unsigned);
+
 private:
 
     CSharedImage();
@@ -74,6 +76,7 @@ private:
     void *dst_jpg_mem2_ = nullptr;
 
     unsigned counter_ {};
+    unsigned jpegQuality_ {};
 
     mutable std::mutex mutex_;
 };
