@@ -276,8 +276,10 @@ handle_request(
             res.content_length(resp_body.size());
             res.keep_alive(req.keep_alive());
 
-            DLOG(INFO) << ">>POST body:" << rel_path << std::endl << req.body() << std::endl;
-            DLOG(INFO) << "<<" << std::endl;
+            /*if (req.method() == http::verb::post) {
+                DLOG(INFO) << ">>POST body:" << rel_path << std::endl << req.body() << std::endl;
+                DLOG(INFO) << "<<" << std::endl;
+            }*/
 
             return send(std::move(res));
 

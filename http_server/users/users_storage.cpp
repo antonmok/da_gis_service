@@ -4,6 +4,7 @@
 
 #include "users_storage.h"
 #include "jwt/json_web_tokens.h"
+#include "common/wildcards.hpp"
 
 CUsersData& CUsersData::Instance()
 {
@@ -13,32 +14,76 @@ CUsersData& CUsersData::Instance()
 
 CUsersData::CUsersData() 
 {
-    UserData usr;
+    {
+        UserData usr;
 
-    usr.name = "Ivan Ivanovich";
-    usr.position = "Developer";
-    usr.credentials.username = "admin";
-    usr.credentials.password = "123";
-    usr.isAdmin = true;
-    //usr.routes.push_back({ "/api/*" }); // TODO: use regexp
-    usr.routes.push_back({ "/api/settings" });
-    usr.routes.push_back({ "/api/logout" });
-    usr.routes.push_back({ "/api/info" });
-    usr.routes.push_back({ "/api/secret" });
+        usr.name = "Ivan Ivanovich";
+        usr.position = "Developer";
+        usr.credentials.username = "admin";
+        usr.credentials.password = "123";
+        usr.isAdmin = true;
+        usr.routes.push_back({ "/api/*" });
+        /*usr.routes.push_back({ "/api/settings" });
+        usr.routes.push_back({ "/api/logout" });
+        usr.routes.push_back({ "/api/info" });
+        usr.routes.push_back({ "/api/secret" });*/
 
-    users_.push_back(usr);
+        usr.settings.speed = true;
+        usr.settings.trajectory = true;
+        usr.settings.park = false;
+        usr.settings.lastMode = "combi";
 
-    usr.name = "Gosha";
-    usr.credentials.username = "user";
-    usr.credentials.password = "456";
-    usr.isAdmin = false;
+        usr.settings.permissions = {"all"};
 
-    usr.routes.clear();
-    usr.routes.push_back({ "/api/settings" });
-    usr.routes.push_back({ "/api/logout" });
-    usr.routes.push_back({ "/api/info" });
+        JSModeSettings defaultModesSetts;
+        defaultModesSetts.auto_.fines.push_back("12.9");
 
-    users_.push_back(usr);
+        defaultModesSetts.automated.maxFines = 1;
+        defaultModesSetts.automated.pause = 5;
+        defaultModesSetts.automated.period = 2;
+        defaultModesSetts.automated.speedLimit = 82;
+
+        defaultModesSetts.combi.fines.push_back("12.9");
+        defaultModesSetts.combi.maxFines = 1;
+        defaultModesSetts.combi.pause = 5;
+        defaultModesSetts.combi.period = 2;
+        defaultModesSetts.combi.speedLimit = 82;
+        defaultModesSetts.delayRec.duration = 1.0;
+
+        usr.settings.defaultModesSettings.push_back(defaultModesSetts);
+
+        usr.settings.modesSettingsPacks.push_back(defaultModesSetts);
+        usr.settings.modesSettingsPacks[0].auto_.fines.push_back("12.5");
+        usr.settings.modesSettingsPacks[0].automated.speedLimit = 42;
+        usr.settings.modesSettingsPacks[0].automated.pause = 3;
+        usr.settings.modesSettingsPacks[0].combi.speedLimit = 42;
+        usr.settings.modesSettingsPacks[0].combi.pause = 3;
+        usr.settings.modesSettingsPacks[0].automated.speedLimit = 42;
+        usr.settings.modesSettingsPacks[0].delayRec.duration = 0.5;
+
+        users_.push_back(usr);
+    }
+
+    {
+        UserData usr;
+
+        usr.name = "Gosha";
+        usr.credentials.username = "user";
+        usr.credentials.password = "456";
+        usr.isAdmin = false;
+
+        usr.routes.clear();
+        usr.routes.push_back({ "/api/settings" });
+        usr.routes.push_back({ "/api/logout" });
+        usr.routes.push_back({ "/api/info" });
+
+        usr.settings.speed = true;
+        usr.settings.trajectory = false;
+        usr.settings.park = true;
+        usr.settings.lastMode = "combi";
+
+        users_.push_back(usr);
+    }
 }
 
 bool CUsersData::AuthenticateUser(const std::string& username, const std::string& password, std::string& token)
@@ -85,8 +130,7 @@ bool CUsersData::CheckAccess(const std::string& token, const std::string& reques
     const auto& routes = GetUserData(token).routes;
 
     for (const auto& route : routes) {
-        // TODO: use regex
-        if (route == requesting_route) {
+        if (WildcardMatch(route.c_str(), requesting_route.c_str())) {
             return true;
         }
     }

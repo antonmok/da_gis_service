@@ -6,6 +6,12 @@
 namespace json = boost::json;
 
 /*******************************/
+struct JSSoftwareInfo
+{
+    std::string serial_number;
+    std::string software_version;
+};
+/*******************************/
 struct JSToken
 {
     std::string token;
@@ -69,6 +75,8 @@ struct JSUserInfo
     bool firstLogin = false;
     std::string name;
     std::string position;
+    unsigned long start_time;   // unix time when user allowed to operate
+    unsigned long last_time;    // last time when user was logged in
 };
 
 inline void tag_invoke(json::value_from_tag, json::value& jv, const JSUserInfo& s)
@@ -101,56 +109,146 @@ std::string StructToJson(const T& data)
     return json::serialize(json_val);
 }
 
-struct JSAuto {
+struct JSModeAuto {
     std::vector<std::string> fines;
 };
 
-struct JSMode {
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSModeAuto& s)
+{
+    jv = {
+        { "fines", s.fines }
+    };
+}
+
+struct JSModeAutomated {
     unsigned speedLimit;
     unsigned maxFines;
     unsigned period;
     unsigned pause;
 };
 
-struct JSDelayRec {
-    unsigned duration;
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSModeAutomated& s)
+{
+    jv = {
+        { "speedLimit", s.speedLimit },
+        { "maxFines", s.maxFines },
+        { "period", s.period },
+        { "pause", s.pause }
+    };
+}
+
+struct JSModeMixed {
+    std::vector<std::string> fines;
+    unsigned speedLimit;
+    unsigned maxFines;
+    unsigned period;
+    unsigned pause;
 };
 
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSModeMixed& s)
+{
+    jv = {
+        { "fines", s.fines },
+        { "maxFines", s.maxFines },
+        { "pause", s.pause },
+        { "period", s.period },
+        { "speedLimit", s.speedLimit }
+    };
+}
+
+struct JSDelayRec {
+    double duration = 1;
+};
+
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSDelayRec& s)
+{
+    jv = {
+        { "duration", s.duration }
+    };
+}
+
 struct JSModeSettings {
-    JSAuto auto_;
-    JSMode automated;
-    JSMode combi;
+    JSModeAuto auto_;
+    JSModeAutomated automated;
+    JSModeMixed combi;
     JSDelayRec delayRec;
 };
 
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSModeSettings& s)
+{
+    jv = {
+        { "auto_", s.auto_ },
+        { "automated", s.automated },
+        { "combi", s.combi },
+        { "delayRec", s.delayRec }
+    };
+}
+
 struct JSMobile {
-    bool isOn;
+    bool isOn = true;
 };
 
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSMobile& s)
+{
+    jv = {
+        { "isOn", s.isOn }
+    };
+}
+
 struct JSGrs {
-    bool sound;
-    bool banners;
+    bool sound = true;
+    bool banners = true;
 };
+
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSGrs& s)
+{
+    jv = {
+        { "sound", s.sound },
+        { "banners", s.banners }
+    };
+}
 
 struct JSNotifications {
     JSGrs grs;
 };
 
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSNotifications& s)
+{
+    jv = {
+        { "grs", s.grs }
+    };
+}
+
 struct JSSounds {
-    std::string notify;
+    std::string notify = "sound1";
 };
 
-struct JSSettings {
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSSounds& s)
+{
+    jv = {
+        { "notify", s.notify }
+    };
+}
+
+struct JSSettingsUX {
     JSMobile mobile;
     JSNotifications notifications;
     JSSounds sounds;
 };
 
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSSettingsUX& s)
+{
+    jv = {
+        { "mobile", s.mobile },
+        { "notifications", s.notifications },
+        { "sounds", s.sounds },
+    };
+}
 
 /*!
  * @brief: Все настройки пользователя.
  */
-struct JSSettingsResp {
+struct JSSettings {
   bool speed;       // включены или выключены внопки во втором тулбаре
   bool park;        //
   bool trajectory;  //
@@ -158,9 +256,23 @@ struct JSSettingsResp {
   std::vector<JSModeSettings> modesSettingsPacks;   // массив сохраненных наборов настроек
 
   std::string lastMode; // название или id последнего использованного режима ('combi')
-  JSSettings settings;  // настройки уведомлений, звуков и тд
+  JSSettingsUX settings;  // настройки уведомлений, звуков и тд
   std::vector<std::string> permissions; // объект со всей информацией, что пользователь может/не может использовать/конфигурировать (задается админом)
 };
+
+inline void tag_invoke(json::value_from_tag, json::value& jv, const JSSettings& s)
+{
+    jv = {
+        { "speed", s.speed },
+        { "park", s.park },
+        { "trajectory", s.trajectory },
+        { "defaultModesSettings", s.defaultModesSettings },
+        { "modesSettingsPacks", s.modesSettingsPacks },
+        { "lastMode", s.lastMode },
+        { "settings", s.settings },
+        { "permissions", s.permissions }
+    };
+}
 
 /*### Мобильный интернет
 

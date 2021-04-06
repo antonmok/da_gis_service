@@ -18,8 +18,9 @@ public:
         std::string name;
         std::string position;
         Credentials credentials;
-        std::vector<std::string> routes;
+        std::vector<std::string> routes;    // wildcards available
         std::vector<std::string> tokens;
+        JSSettings settings;
     };
 
     static CUsersData& Instance();
@@ -35,7 +36,7 @@ public:
     UserData GetUserData(const std::string& token) const;
     void GetUserData(unsigned id) const;
 
-    // TODO: store users in bd (sqlite)
+    // TODO: store users in bd (mongoDB)
     void AddUser(const UserData&);
     void DeleteUser();
 
