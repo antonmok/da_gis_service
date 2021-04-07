@@ -102,6 +102,21 @@ auto bad_request(http::request<Body, http::basic_fields<Allocator>>&& req, beast
     return res;
 };
 
+// Returns a method not allowed response
+template<class Body, class Allocator>
+auto method_not_allowed(http::request<Body, http::basic_fields<Allocator>>&& req)
+{
+    http::response<http::string_body> res{ http::status::method_not_allowed, req.version() };
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::access_control_allow_origin, "*");
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "The method " + std::string(to_string(req.method())) + " is not allowed on " + std::string(req.target());
+    res.prepare_payload();
+
+    return res;
+};
+
 // Returns a not found response
 template<class Body, class Allocator>
 auto not_found(http::request<Body, http::basic_fields<Allocator>>&& req)
@@ -111,7 +126,7 @@ auto not_found(http::request<Body, http::basic_fields<Allocator>>&& req)
     res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
-    res.body() = "The resource '" + std::string(req.target().data(), req.target().length()) + "' was not found.";
+    res.body() = "The resource '" + std::string(req.target()) + "' was not found.";
     res.prepare_payload();
 
     return res;
@@ -156,7 +171,7 @@ auto forbidden(http::request<Body, http::basic_fields<Allocator>>&& req)
     res.set(http::field::access_control_allow_origin, "*");
     res.set(http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
-    res.body() = "You are not allowed to access" + std::string(req.target().data(), req.target().length());
+    res.body() = "You are not allowed to access" + std::string(req.target());
     res.prepare_payload();
 
     return res;
@@ -297,6 +312,9 @@ handle_request(
                 break;
             case http::status::bad_request:
                 return send(bad_request(std::move(req), resp_body));
+                break;
+            case http::status::method_not_allowed:
+                return send(method_not_allowed(std::move(req)));
                 break;
 
             default:

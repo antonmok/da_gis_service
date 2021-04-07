@@ -14,6 +14,8 @@ namespace http = beast::http;
 class CAPIHandler {
 public:
 
+    static CAPIHandler& Instance();
+
     struct RequestContext
     {
         std::string route;
@@ -21,11 +23,6 @@ public:
         std::string body;
     };
 
-    using route_method = std::function<bool(std::string&)>;
-
-    static CAPIHandler& Instance();
-
-    bool ExecuteRouteMethod(std::string& response) const;
     void GetRequestContext(RequestContext& ctx) const;
     const RequestContext& GetRequestContext() const;
 
@@ -46,10 +43,16 @@ public:
         if (token == "" || token == "undefined") return http::status::unauthorized;
         if (!usersData.VerifyToken(token)) return http::status::unauthorized;
 
-        // is method exists
+        // is route exists
         if (route_methods_.count(path) == 0) {
             response = "Method not found: " + path;
             return http::status::bad_request;
+        }
+
+        // TODO: perform this check while OPTIONS request to return correct 'Access-Control-Allow-Methods' header
+        // is http method allowed on this route
+        if (!MethodAllowed(request.method(), path)) {
+            return http::status::method_not_allowed;
         }
 
         // is user autorized to call method
@@ -69,12 +72,20 @@ public:
 
 private:
 
+    struct route_method
+    {
+        std::function<bool(std::string&)> func;
+        std::vector<http::verb> allowed_methods;
+    };
+
     CAPIHandler();
 	~CAPIHandler();
 
 	CAPIHandler(CAPIHandler const&) = delete;
 	CAPIHandler& operator= (CAPIHandler const&) = delete;
 
+    bool ExecuteRouteMethod(std::string& response) const;
+    bool MethodAllowed(http::verb method, std::string& route) const;
     http::status LoginUser(const std::string& body, std::string& response) const;
 
     std::map<std::string, route_method> route_methods_;

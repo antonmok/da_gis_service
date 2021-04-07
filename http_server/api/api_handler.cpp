@@ -33,35 +33,35 @@ bool Cams(std::string&);
 
 CAPIHandler& CAPIHandler::Instance()
 {
-	static CAPIHandler singletonInstance;
-	return singletonInstance;
+    static CAPIHandler singletonInstance;
+    return singletonInstance;
 }
 
 CAPIHandler::CAPIHandler()
 {
-    //route_methods_["api/login"] = LoginUser;
-    route_methods_["/api/logout"] = LogoutUser;
-    route_methods_["/api/secret"] = SecretTest;
-    route_methods_["/api/info"] = InfoUser;
-    route_methods_["/api/settings"] = Settings;
-    route_methods_["/api/settings/mobile"] = SettingsMobile;
-    route_methods_["/api/settings/mobile/operators"] = MobileOperator;  // POST, GET
-    route_methods_["/api/settings/notifications"] = Notifications;
-    route_methods_["/api/settings/sounds"] = Sounds;
-    route_methods_["/api/statistics"] = Statistics;
-    route_methods_["/api/map"] = Map;
-    route_methods_["/api/mode-info"] = ModeInfo;
-    route_methods_["/api/mode-events"] = ModeEvents;
-    route_methods_["/api/event"] = Event;
-    route_methods_["/api/settings/auto"] = SettingsAuto;
-    route_methods_["/api/settings/automated"] = SettingsAutomated;
-    route_methods_["/api/settings/combi"] = SettingsCombi;
-    route_methods_["/api/settings/delay-rec"] = DelayedRecord;
-    route_methods_["/api/settings/modesSettingsPacks"] = ModeSettingsPack;  // POST, DELETE
-    route_methods_["/api/settings/search-grs"] = SearchGrs;
-    route_methods_["/api/shortcommand"] = ShortCommand;
-    route_methods_["/api/mode"] = Mode;
-    route_methods_["/api/cams"] = Cams;
+    //route_methods_["api/login"] = { LoginUser, { http::verb::post } };
+    route_methods_["/api/logout"] = { LogoutUser, { http::verb::post } };
+    route_methods_["/api/secret"] = { SecretTest, { http::verb::get } };
+    route_methods_["/api/info"] = { InfoUser, { http::verb::get } };
+    route_methods_["/api/settings"] = { Settings, { http::verb::get } };
+    route_methods_["/api/settings/mobile"] = { SettingsMobile, { http::verb::post } };
+    route_methods_["/api/settings/mobile/operators"] = { MobileOperator, { http::verb::post, http::verb::get } };
+    route_methods_["/api/settings/notifications"] = { Notifications, { http::verb::post } };
+    route_methods_["/api/settings/sounds"] = { Sounds, { http::verb::post } };
+    route_methods_["/api/statistics"] = { Statistics, { http::verb::get } };
+    route_methods_["/api/map"] = { Map, { http::verb::get } };
+    route_methods_["/api/mode-info"] = { ModeInfo, { http::verb::get } };
+    route_methods_["/api/mode-events"] = { ModeEvents, { http::verb::get } };
+    route_methods_["/api/event"] = { Event, { http::verb::get } };
+    route_methods_["/api/settings/auto"] = { SettingsAuto, { http::verb::post } };
+    route_methods_["/api/settings/automated"] = { SettingsAutomated, { http::verb::post } };
+    route_methods_["/api/settings/combi"] = { SettingsCombi, { http::verb::post } };
+    route_methods_["/api/settings/delay-rec"] = { DelayedRecord, { http::verb::post } };
+    route_methods_["/api/settings/modesSettingsPacks"] = { ModeSettingsPack, { http::verb::post, http::verb::delete_ } };
+    route_methods_["/api/settings/search-grs"] = { SearchGrs, { http::verb::get } };
+    route_methods_["/api/shortcommand"] = { ShortCommand, { http::verb::post } };
+    route_methods_["/api/mode"] = { Mode, { http::verb::post } };
+    route_methods_["/api/cams"] = { Cams, { http::verb::post } };
 }
 
 CAPIHandler::~CAPIHandler() {}
@@ -273,9 +273,18 @@ bool GetParamKey(const std::string& path, unsigned idx, std::string& key_val)
     return true;
 }
 
+bool CAPIHandler::MethodAllowed(http::verb method, std::string& route) const
+{
+    for (const auto& allowed_method : route_methods_.at(route).allowed_methods) {
+        if (method == allowed_method) return true;
+    }
+
+    return false;
+}
+
 bool CAPIHandler::ExecuteRouteMethod(std::string& response) const
 {
-    return route_methods_.at(request_context_.route)(response);
+    return route_methods_.at(request_context_.route).func(response);
 }
 
 void CAPIHandler::GetRequestContext(CAPIHandler::RequestContext& ctx) const

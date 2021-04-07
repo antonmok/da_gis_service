@@ -35,8 +35,8 @@ void CreateToken(const std::string& data, std::string& token) {
 				.set_issuer(ISSUER)
 				.set_type("JWT")
 				.set_issued_at(std::chrono::system_clock::now())
-				//.set_expires_at(std::chrono::system_clock::now() + std::chrono::hours{24})
-				.set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes{1})
+				.set_expires_at(std::chrono::system_clock::now() + std::chrono::hours{24})
+				//.set_expires_at(std::chrono::system_clock::now() + std::chrono::minutes{1})
 				.set_payload_claim("username", jwt::claim(data))
 				.sign(jwt::algorithm::hs256{SECRET_STRING});
 }

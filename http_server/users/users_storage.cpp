@@ -23,10 +23,6 @@ CUsersData::CUsersData()
         usr.credentials.password = "123";
         usr.isAdmin = true;
         usr.routes.push_back({ "/api/*" });
-        /*usr.routes.push_back({ "/api/settings" });
-        usr.routes.push_back({ "/api/logout" });
-        usr.routes.push_back({ "/api/info" });
-        usr.routes.push_back({ "/api/secret" });*/
 
         usr.settings.speed = true;
         usr.settings.trajectory = true;
