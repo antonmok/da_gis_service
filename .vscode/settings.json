@@ -94,6 +94,7 @@
         "__tuple": "cpp",
         "regex": "cpp",
         "__functional_03": "cpp",
-        "__tree": "cpp"
+        "__tree": "cpp",
+        "shared_mutex": "cpp"
     }
 }
